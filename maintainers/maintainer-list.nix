@@ -1835,6 +1835,12 @@
       fingerprint = "E9A3 7864 2165 28CE 507C  CA82 72EA BF75 C331 CD25";
     }];
   };
+  benkuhn = {
+    email = "ben@ben-kuhn.com";
+    github = "ben-kuhn";
+    githubId = 16821405;
+    name = "Ben Kuhn";
+  };
   benley = {
     email = "benley@gmail.com";
     github = "benley";
@@ -9352,6 +9358,12 @@
     githubId = 458783;
     name = "Martin Gammelsæter";
   };
+  martinramm = {
+    email = "martin-ramm@gmx.de";
+    github = "MartinRamm";
+    githubId = 31626748;
+    name = "Martin Ramm";
+  };
   marzipankaiser = {
     email = "nixos@gaisseml.de";
     github = "marzipankaiser";
@@ -10317,6 +10329,12 @@
     github = "mredaelli";
     githubId = 3073833;
     name = "Massimo Redaelli";
+  };
+  mrene = {
+    email = "mathieu.rene@gmail.com";
+    github = "mrene";
+    githubId = 254443;
+    name = "Mathieu Rene";
   };
   mrfreezeex = {
     email = "arthur@cri.epita.fr";
