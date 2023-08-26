@@ -5,7 +5,6 @@
 , fetchFromGitHub
 , freezegun
 , tzdata
-, py
 , pyparsing
 , pydantic
 , pytest-asyncio
@@ -13,21 +12,31 @@
 , pytest-golden
 , pytestCheckHook
 , pythonOlder
+, pythonRelaxDepsHook
+, pyyaml
 }:
 
 buildPythonPackage rec {
   pname = "ical";
-  version = "4.2.9";
+  version = "5.0.1";
   format = "setuptools";
 
-  disabled = pythonOlder "3.9";
+  disabled = pythonOlder "3.10";
 
   src = fetchFromGitHub {
     owner = "allenporter";
     repo = pname;
     rev = "refs/tags/${version}";
-    hash = "sha256-p1cvs+xLin2WK2zyqQFd1vWKzt+LU2mpDSieOgA7Qf8=";
+    hash = "sha256-6gMmY6XlFdqF0DxkrCJhZPzUYZuEpDnIHG++nBRE3hg=";
   };
+
+  nativeBuildInputs = [
+    pythonRelaxDepsHook
+  ];
+
+  pythonRelaxDeps = [
+    "tzdata"
+  ];
 
   propagatedBuildInputs = [
     emoji
@@ -39,15 +48,12 @@ buildPythonPackage rec {
 
   nativeCheckInputs = [
     freezegun
-    py
     pytest-asyncio
     pytest-benchmark
     pytest-golden
     pytestCheckHook
+    pyyaml
   ];
-
-  # https://github.com/allenporter/ical/issues/136
-  disabledTests = [ "test_all_zoneinfo" ];
 
   pythonImportsCheck = [
     "ical"

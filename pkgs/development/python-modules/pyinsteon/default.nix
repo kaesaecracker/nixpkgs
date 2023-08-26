@@ -1,7 +1,7 @@
 { lib
 , aiofiles
 , aiohttp
-, async_generator
+, async-generator
 , buildPythonPackage
 , fetchFromGitHub
 , pypubsub
@@ -15,7 +15,7 @@
 
 buildPythonPackage rec {
   pname = "pyinsteon";
-  version = "1.3.4";
+  version = "1.4.3";
   format = "pyproject";
 
   disabled = pythonOlder "3.6";
@@ -24,7 +24,7 @@ buildPythonPackage rec {
     owner = pname;
     repo = pname;
     rev = "refs/tags/${version}";
-    hash = "sha256-P/5kCXmUWQ/2yvzu/Pr0XBY8zm3fMMyoapGmdtRmxXo=";
+    hash = "sha256-KKF+XYQgdmLbbicyMFyZBG4ol69xAWCF2W/r15gH2Mo=";
   };
 
   nativeBuildInputs = [
@@ -41,7 +41,7 @@ buildPythonPackage rec {
   ];
 
   nativeCheckInputs = [
-    async_generator
+    async-generator
     pytestCheckHook
   ];
 

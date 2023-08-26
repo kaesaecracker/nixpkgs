@@ -4,7 +4,7 @@
 
 buildDunePackage rec {
   pname = "mm";
-  version = "0.8.2";
+  version = "0.8.4";
 
   duneVersion = "3";
 
@@ -14,7 +14,7 @@ buildDunePackage rec {
     owner = "savonet";
     repo = "ocaml-mm";
     rev = "v${version}";
-    sha256 = "sha256-EifM96MWIDyr1EVUZYuISWGwbMshVQppzWLJchqzV2E=";
+    sha256 = "sha256-RM+vsWf2RK5dY84KcqeR/OHwO42EDycrYgfOUFpUE44=";
   };
 
   buildInputs = [ dune-configurator ];

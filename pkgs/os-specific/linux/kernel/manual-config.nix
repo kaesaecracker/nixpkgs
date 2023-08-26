@@ -116,20 +116,6 @@ let
             hash = "sha256-bBOyJcP6jUvozFJU0SPTOf3cmnTQ6ZZ4PlHjiniHXLU=";
           });
 
-      preUnpack = ''
-        # The same preUnpack is used to build the configfile,
-        # which does not have $dev.
-        if [ -n "$dev" ]; then
-            mkdir -p $dev/lib/modules/${modDirVersion}
-            cd $dev/lib/modules/${modDirVersion}
-        fi
-      '';
-
-      postUnpack = ''
-        mv -Tv "$sourceRoot" source 2>/dev/null || :
-        export sourceRoot=$PWD/source
-      '';
-
       postPatch = ''
         sed -i Makefile -e 's|= depmod|= ${buildPackages.kmod}/bin/depmod|'
 
@@ -171,7 +157,8 @@ let
       configurePhase = ''
         runHook preConfigure
 
-        export buildRoot=$(mktemp -d)
+        mkdir build
+        export buildRoot="$(pwd)/build"
 
         echo "manual-config configurePhase buildRoot=$buildRoot pwd=$PWD"
 
@@ -199,14 +186,12 @@ let
       '';
 
       buildFlags = [
-        "DTC_FLAGS=-@"
         "KBUILD_BUILD_VERSION=1-NixOS"
-
-        # Set by default in the kernel since a73619a845d5,
-        # replicated here to apply to older versions.
-        # Makes __FILE__ relative to the build directory.
-        "KCPPFLAGS=-fmacro-prefix-map=$(sourceRoot)/="
-      ] ++ extraMakeFlags;
+        kernelConf.target
+        "vmlinux"  # for "perf" and things like that
+      ] ++ optional isModular "modules"
+        ++ optionals buildDTBs ["dtbs" "DTC_FLAGS=-@"]
+      ++ extraMakeFlags;
 
       installFlags = [
         "INSTALL_PATH=$(out)"
@@ -278,6 +263,8 @@ let
       ];
 
       postInstall = optionalString isModular ''
+        mkdir -p $dev
+        cp vmlinux $dev/
         if [ -z "''${dontStrip-}" ]; then
           installFlagsArray+=("INSTALL_MOD_STRIP=1")
         fi
@@ -286,7 +273,12 @@ let
         unlink $out/lib/modules/${modDirVersion}/build
         unlink $out/lib/modules/${modDirVersion}/source
 
-        mkdir $dev/lib/modules/${modDirVersion}/build
+        mkdir -p $dev/lib/modules/${modDirVersion}/{build,source}
+
+        # To save space, exclude a bunch of unneeded stuff when copying.
+        (cd .. && rsync --archive --prune-empty-dirs \
+            --exclude='/build/' \
+            * $dev/lib/modules/${modDirVersion}/source/)
 
         cd $dev/lib/modules/${modDirVersion}/source
 
@@ -297,16 +289,12 @@ let
         # from a `try-run` call from the Makefile
         rm -f $dev/lib/modules/${modDirVersion}/build/.[0-9]*.d
 
-        # Keep some extra files
-        for f in arch/powerpc/lib/crtsavres.o arch/arm64/kernel/ftrace-mod.o \
-                 scripts/gdb/linux vmlinux vmlinux-gdb.py
-        do
-          if [ -e "$buildRoot/$f" ]; then
-            mkdir -p "$(dirname "$dev/lib/modules/${modDirVersion}/build/$f")"
-            cp -HR $buildRoot/$f $dev/lib/modules/${modDirVersion}/build/$f
+        # Keep some extra files on some arches (powerpc, aarch64)
+        for f in arch/powerpc/lib/crtsavres.o arch/arm64/kernel/ftrace-mod.o; do
+          if [ -f "$buildRoot/$f" ]; then
+            cp $buildRoot/$f $dev/lib/modules/${modDirVersion}/build/$f
           fi
         done
-        ln -s $dev/lib/modules/${modDirVersion}/build/vmlinux $dev
 
         # !!! No documentation on how much of the source tree must be kept
         # If/when kernel builds fail due to missing files, you can add
@@ -347,11 +335,6 @@ let
 
         # Remove reference to kmod
         sed -i Makefile -e 's|= ${buildPackages.kmod}/bin/depmod|= depmod|'
-      '';
-
-      preFixup = ''
-        # Don't strip $dev/lib/modules/*/vmlinux
-        stripDebugList="$(cd $dev && echo lib/modules/*/build/*/)"
       '';
 
       requiredSystemFeatures = [ "big-parallel" ];

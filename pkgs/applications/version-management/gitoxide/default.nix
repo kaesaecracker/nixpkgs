@@ -13,24 +13,25 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "gitoxide";
-  version = "0.22.1";
+  version = "0.28.0";
 
   src = fetchFromGitHub {
     owner = "Byron";
     repo = "gitoxide";
     rev = "v${version}";
-    sha256 = "sha256-PetU/cUWFZWl1OoSObI7wwqJLexWPTP6ynNSyPXjvMc=";
+    hash = "sha256-7iJx7kE606jeaokROmOSoh0egCQUgYwvg8BAA3y1BGs=";
   };
 
-  cargoHash = "sha256-A7gwC9EQ+5GVciGsL9uPbZ6nThPfku3ZNH8qQwfI0QQ=";
+  cargoHash = "sha256-zChqIA/KuS1aBs/g1tlymGvvJeljKMMCODijPhQYy40=";
 
   nativeBuildInputs = [ cmake pkg-config ];
+
   buildInputs = [ curl ] ++ (if stdenv.isDarwin
     then [ libiconv Security SystemConfiguration ]
     else [ openssl ]);
 
   # Needed to get openssl-sys to use pkg-config.
-  OPENSSL_NO_VENDOR = 1;
+  env.OPENSSL_NO_VENDOR = 1;
 
   meta = with lib; {
     description = "A command-line application for interacting with git repositories";

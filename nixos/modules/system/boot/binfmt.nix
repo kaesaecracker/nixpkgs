@@ -125,6 +125,10 @@ let
       magicOrExtension = ''\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\xf3\x00'';
       mask = ''\xff\xff\xff\xff\xff\xff\xff\x00\xff\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff'';
     };
+    loongarch64-linux = {
+      magicOrExtension = ''\x7fELF\x02\x01\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x02\x00\x02\x01'';
+      mask = ''\xff\xff\xff\xff\xff\xff\xff\xfc\x00\xff\xff\xff\xff\xff\xff\xff\xfe\xff\xff\xff'';
+    };
     wasm32-wasi = {
       magicOrExtension = ''\x00asm'';
       mask = ''\xff\xff\xff\xff'';
@@ -133,14 +137,8 @@ let
       magicOrExtension = ''\x00asm'';
       mask = ''\xff\xff\xff\xff'';
     };
-    x86_64-windows = {
-      magicOrExtension = "exe";
-      recognitionType = "extension";
-    };
-    i686-windows = {
-      magicOrExtension = "exe";
-      recognitionType = "extension";
-    };
+    x86_64-windows.magicOrExtension = "MZ";
+    i686-windows.magicOrExtension = "MZ";
   };
 
 in {
@@ -313,7 +311,8 @@ in {
     environment.etc."binfmt.d/nixos.conf".source = builtins.toFile "binfmt_nixos.conf"
       (lib.concatStringsSep "\n" (lib.mapAttrsToList makeBinfmtLine config.boot.binfmt.registrations));
     system.activationScripts.binfmt = stringAfter [ "specialfs" ] ''
-      mkdir -p -m 0755 /run/binfmt
+      mkdir -p /run/binfmt
+      chmod 0755 /run/binfmt
       ${lib.concatStringsSep "\n" (lib.mapAttrsToList activationSnippet config.boot.binfmt.registrations)}
     '';
     systemd = lib.mkIf (config.boot.binfmt.registrations != {}) {

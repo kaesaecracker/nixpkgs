@@ -16,14 +16,14 @@
 
 buildPythonPackage rec {
   pname = "datadog";
-  version = "0.44.0";
+  version = "0.46.0";
   format = "pyproject";
 
   disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-BxFw8MfvIlEdv3+b12xL5QDuLT1SBykApch7VJXSxzM=";
+    hash = "sha256-5PvJKoXisJGaImiWrkX8Xks1bAxX8cJlllnfvgeJxnQ=";
   };
 
   nativeBuildInputs = [
@@ -33,6 +33,8 @@ buildPythonPackage rec {
   propagatedBuildInputs = [
     requests
   ];
+
+  __darwinAllowLocalNetworking = true;
 
   nativeCheckInputs = [
     click

@@ -2,7 +2,7 @@
 , fetchFromGitHub
 , fetchpatch
 , cmake, pkg-config, unzip, zlib, pcre, hdf5
-, glog, boost, gflags, protobuf
+, glog, boost, gflags, protobuf3_21
 , config
 
 , enableJPEG      ? true, libjpeg
@@ -14,7 +14,7 @@
 , enableOpenblas  ? true, openblas, blas, lapack
 , enableContrib   ? true
 
-, enableCuda      ? (config.cudaSupport or false) &&
+, enableCuda      ? config.cudaSupport &&
                     stdenv.hostPlatform.isx86_64
 , cudaPackages ? { }
 , enableUnfree    ? false
@@ -32,7 +32,7 @@
 , enableDC1394    ? false, libdc1394
 , enableDocs      ? false, doxygen, graphviz-nox
 
-, AVFoundation, Cocoa, VideoDecodeAcceleration, bzip2, CoreMedia, MediaToolbox
+, AVFoundation, Cocoa, VideoDecodeAcceleration, bzip2, CoreMedia, MediaToolbox, Accelerate
 }:
 
 assert blas.implementation == "openblas" && lapack.implementation == "openblas";
@@ -187,7 +187,7 @@ stdenv.mkDerivation {
 
   buildInputs =
        [ zlib pcre hdf5 glog boost gflags ]
-    ++ lib.optional useSystemProtobuf protobuf
+    ++ lib.optional useSystemProtobuf protobuf3_21
     ++ lib.optional enablePython pythonPackages.python
     ++ lib.optional enableGtk2 gtk2
     ++ lib.optional enableGtk3 gtk3
@@ -211,7 +211,9 @@ stdenv.mkDerivation {
     # tesseract & leptonica.
     ++ lib.optionals enableTesseract [ tesseract leptonica ]
     ++ lib.optional enableTbb tbb
-    ++ lib.optionals stdenv.isDarwin [ bzip2 AVFoundation Cocoa VideoDecodeAcceleration CoreMedia MediaToolbox ]
+    ++ lib.optionals stdenv.isDarwin [
+      bzip2 AVFoundation Cocoa VideoDecodeAcceleration CoreMedia MediaToolbox Accelerate
+    ]
     ++ lib.optionals enableDocs [ doxygen graphviz-nox ];
 
   propagatedBuildInputs = lib.optional enablePython pythonPackages.numpy

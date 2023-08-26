@@ -45,14 +45,14 @@ let
 
   pname = "slack";
 
-  x86_64-darwin-version = "4.29.149";
-  x86_64-darwin-sha256 = "sha256-E0YnOPnaWFe17gCpFywxu5uHs1pEktA1tUu4QqvKhYw=";
+  x86_64-darwin-version = "4.33.84";
+  x86_64-darwin-sha256 = "1qkcj0w5rqfdj8l7p7gv2ck0rgkm5sc8490f8mnbflgvjj9y0gsb";
 
-  x86_64-linux-version = "4.29.149";
-  x86_64-linux-sha256 = "sha256-ulXIGLp2ql47ZS6IeaMuqye39deDtukOB1dxy5BNCwI=";
+  x86_64-linux-version = "4.33.84";
+  x86_64-linux-sha256 = "0cjl3m9gprxkm57889l1avkl21pyc7bzhcgm4j5yf938dp699zhd";
 
-  aarch64-darwin-version = "4.29.149";
-  aarch64-darwin-sha256 = "sha256-Nn+dFD3H/By+aBPLDxnPneNXuFl+tHdLhxJXeYBMORg=";
+  aarch64-darwin-version = "4.33.84";
+  aarch64-darwin-sha256 = "0aw4wn4xx304dyzz7v9lmdgwg1345lhizil8yq9cjqy5kas3zj34";
 
   version = {
     x86_64-darwin = x86_64-darwin-version;
@@ -85,6 +85,7 @@ let
     license = licenses.unfree;
     maintainers = with maintainers; [ mmahut maxeaubrey ];
     platforms = [ "x86_64-darwin" "x86_64-linux" "aarch64-darwin" ];
+    mainProgram = "slack";
   };
 
   linux = stdenv.mkDerivation rec {
@@ -177,7 +178,7 @@ let
       # Fix the desktop link
       substituteInPlace $out/share/applications/slack.desktop \
         --replace /usr/bin/ $out/bin/ \
-        --replace /usr/share/ $out/share/ \
+        --replace /usr/share/pixmaps/slack.png slack \
         --replace bin/slack "bin/slack -s"
 
       runHook postInstall

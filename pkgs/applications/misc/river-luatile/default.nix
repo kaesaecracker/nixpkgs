@@ -7,16 +7,16 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "river-luatile";
-  version = "0.1.1";
+  version = "0.1.3";
 
   src = fetchFromGitHub {
     owner = "MaxVerevkin";
     repo = "river-luatile";
     rev = "v${version}";
-    hash = "sha256-eZgoFbat7X/jh5udlNyIuTheBUCHpaVRbsojYLATO18=";
+    hash = "sha256-ZBytoj4L72TjxJ7vFivjcSO69AcdwKNbXh4rA/bn5iU=";
   };
 
-  cargoHash = "sha256-Vqyt5bL1lVhy/Wxd+zF7Wugvb7dW1N9Kq2TTFSaodnE=";
+  cargoHash = "sha256-GcMSglLKuUD3nVj0/8Nbrk4qs5gl5PlCj7r1MYq/vQg=";
 
   nativeBuildInputs = [
     pkg-config

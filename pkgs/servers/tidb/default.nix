@@ -2,16 +2,16 @@
 
 buildGoModule rec {
   pname = "tidb";
-  version = "6.6.0";
+  version = "7.3.0";
 
   src = fetchFromGitHub {
     owner = "pingcap";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-u0Zl2SULBWrUu3V7VbbbkSMPoRijWQRYCMcqD4nC3Bw=";
+    sha256 = "sha256-zpAduymFC17iL9eEssFoHxK+J4EP1QyamchfLetFN/k=";
   };
 
-  vendorHash = "sha256-0fvvCOvRM3NbcUln5UfR/jTxVKZuQudgm6GivKaYm2c=";
+  vendorHash = "sha256-GbAZK2TQKc3bziZm202Q2QLLK0TDJ/AplSGKBSLSoqQ=";
 
   ldflags = [
     "-s"
@@ -26,6 +26,6 @@ buildGoModule rec {
     description = "An open-source, cloud-native, distributed, MySQL-Compatible database for elastic scale and real-time analytics";
     homepage = "https://pingcap.com";
     license = licenses.asl20;
-    maintainers = with maintainers; [ candyc1oud ];
+    maintainers = [];
   };
 }

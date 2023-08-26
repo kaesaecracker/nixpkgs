@@ -14,16 +14,16 @@
 
 buildPythonPackage rec {
   pname = "pipdeptree";
-  version = "2.5.0";
+  version = "2.13.0";
   format = "pyproject";
 
-  disabled = pythonOlder "3.7";
+  disabled = pythonOlder "3.8";
 
   src = fetchFromGitHub {
     owner = "tox-dev";
     repo = "pipdeptree";
     rev = "refs/tags/${version}";
-    hash = "sha256-hAODK7kFCntfKC77VF/KyTk0O/z+bXHixVxQIz8JuDk=";
+    hash = "sha256-mblj6SQK/az2al81wMiWXHuyn1+30jfAxrWGv9Nw/gw=";
   };
 
   SETUPTOOLS_SCM_PRETEND_VERSION = version;
@@ -52,6 +52,11 @@ buildPythonPackage rec {
 
   pythonImportsCheck = [
     "pipdeptree"
+  ];
+
+  disabledTests = [
+    # Don't run console tests
+    "test_console"
   ];
 
   meta = with lib; {

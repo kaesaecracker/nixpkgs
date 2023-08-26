@@ -1,13 +1,12 @@
-{ stable
-, branch
+{ channel
 , version
-, sha256Hash
-, mkOverride
+, hash
 }:
 
 { lib
 , python3
 , fetchFromGitHub
+, pkgsStatic
 }:
 
 python3.pkgs.buildPythonApplication {
@@ -15,24 +14,30 @@ python3.pkgs.buildPythonApplication {
   inherit version;
 
   src = fetchFromGitHub {
+    inherit hash;
     owner = "GNS3";
     repo = "gns3-server";
-    rev = "v${version}";
-    sha256 = sha256Hash;
+    rev = "refs/tags/v${version}";
   };
 
-  postPatch = ''
-    substituteInPlace requirements.txt \
-      --replace "psutil==" "psutil>=" \
-      --replace "jsonschema>=4.17.0,<4.18" "jsonschema" \
-      --replace "sentry-sdk==1.10.1,<1.11" "sentry-sdk"
+  # GNS3 2.3.26 requires a static BusyBox for the Docker integration
+  prePatch = ''
+    cp ${pkgsStatic.busybox}/bin/busybox gns3server/compute/docker/resources/bin/busybox
   '';
+
+  nativeBuildInputs = with python3.pkgs; [
+    pythonRelaxDepsHook
+  ];
+
+  pythonRelaxDeps = [
+    "jsonschema"
+  ];
 
   propagatedBuildInputs = with python3.pkgs; [
     aiofiles
     aiohttp
     aiohttp-cors
-    async_generator
+    async-generator
     distro
     importlib-resources
     jinja2
@@ -43,6 +48,7 @@ python3.pkgs.buildPythonApplication {
     py-cpuinfo
     sentry-sdk
     setuptools
+    truststore
     yarl
     zipstream
   ];
@@ -55,7 +61,7 @@ python3.pkgs.buildPythonApplication {
   '';
 
   meta = with lib; {
-    description = "Graphical Network Simulator 3 server (${branch} release)";
+    description = "Graphical Network Simulator 3 server (${channel} release)";
     longDescription = ''
       The GNS3 server manages emulators such as Dynamips, VirtualBox or
       Qemu/KVM. Clients like the GNS3 GUI control the server using a HTTP REST

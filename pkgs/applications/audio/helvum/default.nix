@@ -1,35 +1,36 @@
 { lib
+, cargo
 , clang
 , desktop-file-utils
 , fetchFromGitLab
-, fetchpatch
 , glib
 , gtk4
-, libclang
 , meson
 , ninja
 , pipewire
 , pkg-config
 , rustPlatform
+, rustc
 , stdenv
+, wrapGAppsHook4
 }:
 
 stdenv.mkDerivation rec {
   pname = "helvum";
-  version = "0.4.0";
+  version = "0.4.1";
 
   src = fetchFromGitLab {
     domain = "gitlab.freedesktop.org";
     owner = "pipewire";
     repo = pname;
     rev = version;
-    hash = "sha256-TvjO7fGobGmAltVHeXWyMtMLANdVWVGvBYq20JD3mMI=";
+    hash = "sha256-nBU8dk22tzVf60yznTYJBYRKG+ctwWl1epU90R0zXr0=";
   };
 
   cargoDeps = rustPlatform.fetchCargoTarball {
     inherit src;
     name = "${pname}-${version}";
-    hash = "sha256-W5Imlut30cjV4A6TCjBFLbViB0CDUucNsvIUiCXqu7I=";
+    hash = "sha256-kzu8dzKob9KxKEP3ElUYCCTdyvbzi+jSXTaaaaPMhYg=";
   };
 
   nativeBuildInputs = [
@@ -38,9 +39,10 @@ stdenv.mkDerivation rec {
     ninja
     pkg-config
     rustPlatform.cargoSetupHook
-    rustPlatform.rust.cargo
-    rustPlatform.rust.rustc
+    cargo
+    rustc
     rustPlatform.bindgenHook
+    wrapGAppsHook4
   ];
 
   buildInputs = [
@@ -56,5 +58,6 @@ stdenv.mkDerivation rec {
     license = licenses.gpl3Only;
     maintainers = with maintainers; [ fufexan ];
     platforms = platforms.linux;
+    mainProgram = "helvum";
   };
 }

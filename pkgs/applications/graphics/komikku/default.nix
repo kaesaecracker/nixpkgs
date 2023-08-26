@@ -1,5 +1,6 @@
 { lib
 , fetchFromGitLab
+, fetchpatch
 , desktop-file-utils
 , gettext
 , glib
@@ -7,7 +8,7 @@
 , gtk4
 , libadwaita
 , libnotify
-, webkitgtk_5_0
+, webkitgtk_6_0
 , meson
 , ninja
 , pkg-config
@@ -18,7 +19,7 @@
 
 python3.pkgs.buildPythonApplication rec {
   pname = "komikku";
-  version = "1.16.0";
+  version = "1.22.0";
 
   format = "other";
 
@@ -26,7 +27,7 @@ python3.pkgs.buildPythonApplication rec {
     owner = "valos";
     repo = "Komikku";
     rev = "v${version}";
-    hash = "sha256-SzK86uzdGnNFNtbvw56n3AxjxcCBjHFs9wD98TVggAo=";
+    hash = "sha256-6Pqa3qNnH8WF/GK4CLyEmLoPm4A6Q3Gri2x0whf6WTY=";
   };
 
   nativeBuildInputs = [
@@ -45,8 +46,7 @@ python3.pkgs.buildPythonApplication rec {
     gtk4
     libadwaita
     libnotify
-    webkitgtk_5_0
-    gobject-introspection
+    webkitgtk_6_0
   ];
 
   propagatedBuildInputs = with python3.pkgs; [
@@ -80,9 +80,7 @@ python3.pkgs.buildPythonApplication rec {
   '';
 
   passthru = {
-    updateScript = nix-update-script {
-      attrPath = "komikku";
-    };
+    updateScript = nix-update-script { };
   };
 
   meta = with lib; {

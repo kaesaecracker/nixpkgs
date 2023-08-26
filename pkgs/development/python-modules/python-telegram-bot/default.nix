@@ -19,16 +19,16 @@
 
 buildPythonPackage rec {
   pname = "python-telegram-bot";
-  version = "20.1";
+  version = "20.4";
   format = "setuptools";
 
-  disabled = pythonOlder "3.7";
+  disabled = pythonOlder "3.8";
 
   src = fetchFromGitHub {
     owner = pname;
     repo = pname;
     rev = "refs/tags/v${version}";
-    hash = "sha256-fRvusmf33QFBZc/Sq81Dx/MGBvcK514S5llJO0XbTgc=";
+    hash = "sha256-owbJJZjBkMjsgfBLRl+rnePrIvQ0sUZs7rP9ie912pw=";
   };
 
   propagatedBuildInputs = [

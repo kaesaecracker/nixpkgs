@@ -16,17 +16,27 @@
   # Test inputs
 , python
 , pytest
+, py-cpuinfo
 }:
 
 buildPythonPackage rec {
   pname = "tables";
   version = "3.8.0";
-  disabled = pythonOlder "3.5";
+
+  disabled = pythonOlder "3.8";
 
   src = fetchPypi {
     inherit pname version;
     hash = "sha256-NPP6I2bOILGPHfVzp3wdJzBs4fKkHZ+e/2IbUZLqh4g=";
   };
+
+  patches = [
+    (fetchpatch {
+      name = "numpy-1.25-compatibility.patch";
+      url = "https://github.com/PyTables/PyTables/commit/337792561e5924124efd20d6fea6bbbd2428b2aa.patch";
+      hash = "sha256-pz3A/jTPWXXlzr+Yl5PRUvdSAinebFsoExfek4RUHkc=";
+    })
+  ];
 
   nativeBuildInputs = [
     blosc2
@@ -40,11 +50,13 @@ buildPythonPackage rec {
     hdf5
     lzo
   ];
+
   propagatedBuildInputs = [
     blosc2
+    py-cpuinfo
     numpy
     numexpr
-    packaging  # uses packaging.version at runtime
+    packaging # uses packaging.version at runtime
   ];
 
   # When doing `make distclean`, ignore docs
@@ -92,6 +104,7 @@ buildPythonPackage rec {
   meta = with lib; {
     description = "Hierarchical datasets for Python";
     homepage = "https://www.pytables.org/";
+    changelog = "https://github.com/PyTables/PyTables/releases/tag/v${version}";
     license = licenses.bsd2;
     maintainers = with maintainers; [ drewrisinger ];
   };

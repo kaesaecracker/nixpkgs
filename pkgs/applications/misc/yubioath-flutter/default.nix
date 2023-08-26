@@ -1,33 +1,31 @@
 { lib
-, flutter
+, flutter37
 , python3
 , fetchFromGitHub
-, stdenv
 , pcre2
+, libnotify
+, libappindicator
+, pkg-config
 , gnome
 , makeWrapper
 , removeReferencesTo
 }:
-let
-  vendorHashes = {
-    x86_64-linux = "sha256-Upe0cEDG02RJD50Ht9VNMwkelsJHX8zOuJZssAhMuMY=";
-    aarch64-linux = "sha256-lKER4+gcyFqnCvgBl/qdVBCbUpocWUnXGLXsX82MSy4=";
-  };
-in
-flutter.mkFlutterApp rec {
+
+flutter37.buildFlutterApplication rec {
   pname = "yubioath-flutter";
-  version = "6.1.0";
+  version = "6.2.0";
 
   src = fetchFromGitHub {
     owner = "Yubico";
     repo = "yubioath-flutter";
     rev = version;
-    sha256 = "sha256-N9/qwC79mG9r+zMPLHSPjNSQ+srGtnXuKsf0ijtH7CI=";
+    hash = "sha256-NgzijuvyWNl9sFQzq1Jzk1povF8c/rKuVyVKeve+Vic=";
   };
 
   passthru.helper = python3.pkgs.callPackage ./helper.nix { inherit src version meta; };
 
-  vendorHash = vendorHashes.${stdenv.system};
+  depsListFile = ./deps.json;
+  vendorHash = "sha256-q/dNj9Pu7zg0HkV2QkXBbXiTsljsSJOqXhvAQlnoLlA=";
 
   postPatch = ''
     substituteInPlace linux/CMakeLists.txt \
@@ -67,21 +65,24 @@ flutter.mkFlutterApp rec {
       --replace "@EXEC_PATH/linux_support/com.yubico.yubioath.png" "$out/share/icons/com.yubico.yubioath.png"
 
     # Remove unnecessary references to Flutter.
-    remove-references-to -t ${flutter.unwrapped} $out/app/data/flutter_assets/shaders/ink_sparkle.frag
+    remove-references-to -t ${flutter37.unwrapped} $out/app/data/flutter_assets/shaders/ink_sparkle.frag
   '';
 
   nativeBuildInputs = [
     makeWrapper
     removeReferencesTo
+    pkg-config
   ];
 
   buildInputs = [
     pcre2
+    libnotify
+    libappindicator
   ];
 
   disallowedReferences = [
-    flutter
-    flutter.unwrapped
+    flutter37
+    flutter37.unwrapped
   ];
 
   meta = with lib; {
@@ -89,6 +90,6 @@ flutter.mkFlutterApp rec {
     homepage = "https://github.com/Yubico/yubioath-flutter";
     license = licenses.asl20;
     maintainers = with maintainers; [ lukegb ];
-    platforms = builtins.attrNames vendorHashes;
+    platforms = [ "x86_64-linux" "aarch64-linux" ];
   };
 }

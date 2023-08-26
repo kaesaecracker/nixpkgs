@@ -5,8 +5,8 @@
 
 let
   # Compare with https://github.com/draios/sysdig/blob/dev/cmake/modules/falcosecurity-libs.cmake
-  libsRev = "0.10.5";
-  libsSha256 = "sha256-5a5ePcMHAlniJ8sU/5kKdRp5YkJ6tcr4h5Ru4Oc2kQY=";
+  libsRev = "59fb313475b82f842e9e9bbc1e0e629428c0a4cf";
+  libsSha256 = "sha256-IjzLbCOpB6EgPDgkGIyg1dNxHfYgU10OLgXrDOPmoTs=";
 
   # Compare with https://github.com/falcosecurity/libs/blob/master/cmake/modules/valijson.cmake#L17
   valijson = fetchFromGitHub {
@@ -16,29 +16,33 @@ let
     sha256 = "sha256-ZD19Q2MxMQd3yEKbY90GFCrerie5/jzgO8do4JQDoKM=";
   };
 
+  # https://github.com/draios/sysdig/blob/0.31.5/cmake/modules/driver.cmake
   driver = fetchFromGitHub {
     owner = "falcosecurity";
     repo = "libs";
-    rev = "3.0.1+driver";
-    sha256 = "sha256-bK9wv17bVl93rOqw7JICnMOM0fDtPIErfMmUmNKOD5c=";
-  };
-  # Workaround for scap-driver compilation error on kernel 6.2: https://github.com/falcosecurity/libs/issues/918
-  driverPatch = fetchpatch {
-    url = "https://github.com/falcosecurity/libs/commit/b8ec3e8637c850066d01543616fe413e8deb9e1f.patch";
-    hash = "sha256-s7iHbOjVqHSWRY4gktZldgrU5OClqRmbqmDtUgFIeh0=";
+    rev = libsRev;
+    sha256 = libsSha256;
   };
 
 in
 stdenv.mkDerivation rec {
   pname = "sysdig";
-  version = "0.31.3";
+  version = "0.33.1";
 
   src = fetchFromGitHub {
     owner = "draios";
     repo = "sysdig";
     rev = version;
-    sha256 = "sha256-TMh2gw/vw6DbhKGwbqU2+c0DTpRaMZqUM83KE18NDmI=";
+    sha256 = "sha256-qcJ9EcePrsKic+wgsck+pTrRdQic0xhzguH4EYVP0gk=";
   };
+
+  patches = [
+    # https://github.com/draios/sysdig/pull/2024
+    (fetchpatch {
+      url = "https://github.com/draios/sysdig/commit/d9515aad2be660b2ba7ec8c0b4fb2467a10434af.patch";
+      sha256 = "sha256-3m+Rn8BZS8U8QTBDJ6x7kQbH6BE3HKgt1iNnRjPEr8k=";
+    })
+  ];
 
   nativeBuildInputs = [ cmake perl installShellFiles pkg-config ];
   buildInputs = [
@@ -73,7 +77,6 @@ stdenv.mkDerivation rec {
     chmod -R +w libs
     cp -r ${driver} driver-src
     chmod -R +w driver-src
-    patch -p1 -d driver-src < ${driverPatch}
     cmakeFlagsArray+=(
       "-DFALCOSECURITY_LIBS_SOURCE_DIR=$(pwd)/libs"
       "-DVALIJSON_INCLUDE=${valijson}/include"
@@ -90,8 +93,11 @@ stdenv.mkDerivation rec {
     "-DCREATE_TEST_TARGETS=OFF"
   ] ++ lib.optional (kernel == null) "-DBUILD_DRIVER=OFF";
 
-  # needed since luajit-2.1.0-beta3
-  env.NIX_CFLAGS_COMPILE = "-DluaL_reg=luaL_Reg -DluaL_getn(L,i)=((int)lua_objlen(L,i))";
+  env.NIX_CFLAGS_COMPILE =
+   # needed since luajit-2.1.0-beta3
+   "-DluaL_reg=luaL_Reg -DluaL_getn(L,i)=((int)lua_objlen(L,i)) " +
+   # fix compiler warnings been treated as errors
+   "-Wno-error";
 
   preConfigure = ''
     if ! grep -q "${libsRev}" cmake/modules/falcosecurity-libs.cmake; then
@@ -120,9 +126,13 @@ stdenv.mkDerivation rec {
       if test -f "$out/lib/modules/${kernel.modDirVersion}/extra/scap.ko"; then
           sed -i "s#$kernel_dev#................................#g" $out/lib/modules/${kernel.modDirVersion}/extra/scap.ko
       else
-          xz -d $out/lib/modules/${kernel.modDirVersion}/extra/scap.ko.xz
-          sed -i "s#$kernel_dev#................................#g" $out/lib/modules/${kernel.modDirVersion}/extra/scap.ko
-          xz $out/lib/modules/${kernel.modDirVersion}/extra/scap.ko
+          for i in $out/lib/modules/${kernel.modDirVersion}/{extra,updates}/scap.ko.xz; do
+            if test -f "$i"; then
+              xz -d $i
+              sed -i "s#$kernel_dev#................................#g" ''${i%.xz}
+              xz -9 ''${i%.xz}
+            fi
+          done
       fi
     '';
 

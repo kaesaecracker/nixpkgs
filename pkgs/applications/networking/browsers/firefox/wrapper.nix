@@ -1,4 +1,5 @@
 { stdenv, lib, makeDesktopItem, makeWrapper, makeBinaryWrapper, lndir, config
+, buildPackages
 , jq, xdg-utils, writeText
 
 ## various stuff that can be plugged in
@@ -6,7 +7,7 @@
 , gnome/*.gnome-shell*/
 , browserpass, gnome-browser-connector, uget-integrator, plasma5Packages, bukubrow, pipewire
 , tridactyl-native
-, fx_cast_bridge
+, fx-cast-bridge
 , udev
 , libkrb5
 , libva
@@ -68,7 +69,7 @@ let
           ++ lib.optional (cfg.enableGnomeExtensions or false) gnome-browser-connector
           ++ lib.optional (cfg.enableUgetIntegrator or false) uget-integrator
           ++ lib.optional (cfg.enablePlasmaBrowserIntegration or false) plasma5Packages.plasma-browser-integration
-          ++ lib.optional (cfg.enableFXCastBridge or false) fx_cast_bridge
+          ++ lib.optional (cfg.enableFXCastBridge or false) fx-cast-bridge
           ++ extraNativeMessagingHosts
         ;
       libs =   lib.optionals stdenv.isLinux [ udev libva mesa libnotify xorg.libXScrnSaver cups pciutils ]
@@ -275,7 +276,7 @@ let
           # Symbolic link: wrap the link's target.
           oldExe="$(readlink -v --canonicalize-existing "$executablePath")"
           rm "$executablePath"
-        elif wrapperCmd=$(${makeBinaryWrapper.extractCmd} "$executablePath"); [[ $wrapperCmd ]]; then
+        elif wrapperCmd=$(${buildPackages.makeBinaryWrapper.extractCmd} "$executablePath"); [[ $wrapperCmd ]]; then
           # If the executable is a binary wrapper, we need to update its target to
           # point to $out, but we can't just edit the binary in-place because of length
           # issues. So we extract the command used to create the wrapper and add the
@@ -302,7 +303,7 @@ let
           "''${executablePath}${nameSuffix}" \
             --prefix LD_LIBRARY_PATH ':' "$libs" \
             --suffix-each GTK_PATH ':' "$gtk_modules" \
-            --suffix PATH ':' "${xdg-utils}/bin" \
+            ${lib.optionalString (!xdg-utils.meta.broken) "--suffix PATH ':' \"${xdg-utils}/bin\""} \
             --suffix PATH ':' "$out/bin" \
             --set MOZ_APP_LAUNCHER "${launcherName}" \
             --set MOZ_SYSTEM_DIR "$out/lib/mozilla" \

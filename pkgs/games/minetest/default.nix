@@ -14,6 +14,7 @@
 , openal
 , libvorbis
 , sqlite
+, lua5_1
 , luajit
 , freetype
 , gettext
@@ -93,8 +94,9 @@ let
     nativeBuildInputs = [ cmake doxygen graphviz ninja ];
 
     buildInputs = [
-      irrlichtmtInput luajit jsoncpp gettext freetype sqlite curl bzip2 ncurses
+      irrlichtmtInput jsoncpp gettext freetype sqlite curl bzip2 ncurses
       gmp libspatialindex
+    ] ++ [ (if lib.meta.availableOn stdenv.hostPlatform luajit then luajit else lua5_1) ] ++ [
     ] ++ optionals stdenv.isDarwin [
       libiconv OpenGL OpenAL Carbon Cocoa
     ] ++ optionals buildClient [
@@ -128,9 +130,9 @@ let
   };
 
   v5 = {
-    version = "5.6.1";
-    sha256 = "sha256-1mUmtM09jqJhD2RcLCAjaI+JkqP52QYH3KLkY5MZ860=";
-    dataSha256 = "sha256-Ye8MihrOqjSoy+vNr/CM/C/sNXdexe08dxrmoMxsG/A=";
+    version = "5.7.0";
+    sha256 = "sha256-9AL6gTmy05yTeYfCq3EMK4gqpBWdHwvJ5Flpzj8hFAE=";
+    dataSha256 = "sha256-wWgeO8513N5jQdWvZrq357fPpAU5ik06mgZraWCQawo=";
   };
 
   mkClient = version: generic (version // { buildClient = true; buildServer = false; });

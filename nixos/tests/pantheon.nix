@@ -3,9 +3,7 @@ import ./make-test-python.nix ({ pkgs, lib, ...} :
 {
   name = "pantheon";
 
-  meta = with lib; {
-    maintainers = teams.pantheon.members;
-  };
+  meta.maintainers = lib.teams.pantheon.members;
 
   nodes.machine = { ... }:
 
@@ -62,6 +60,9 @@ import ./make-test-python.nix ({ pkgs, lib, ...} :
     with subtest("Open elementary terminal"):
         machine.execute("su - ${user.name} -c 'DISPLAY=:0 io.elementary.terminal >&2 &'")
         machine.wait_for_window("io.elementary.terminal")
+
+    with subtest("Check if gala has ever coredumped"):
+        machine.fail("coredumpctl --json=short | grep gala")
         machine.sleep(20)
         machine.screenshot("screen")
   '';

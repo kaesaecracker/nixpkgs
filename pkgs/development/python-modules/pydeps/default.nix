@@ -6,11 +6,12 @@
 , pytestCheckHook
 , pythonOlder
 , pyyaml
+, toml
 }:
 
 buildPythonPackage rec {
   pname = "pydeps";
-  version = "1.11.1";
+  version = "1.12.17";
   format = "setuptools";
 
   disabled = pythonOlder "3.7";
@@ -19,7 +20,7 @@ buildPythonPackage rec {
     owner = "thebjorn";
     repo = pname;
     rev = "refs/tags/v${version}";
-    hash = "sha256-nFdt68QhpX1URLEQtdikR11KFK9E9Y+cTvJQn4/YZlI=";
+    hash = "sha256-DVSZeNuDz/y0jh/HimV+jFgNFevMhUKOu6EhZytMMqQ=";
   };
 
   buildInputs = [
@@ -34,6 +35,7 @@ buildPythonPackage rec {
   nativeCheckInputs = [
     pytestCheckHook
     pyyaml
+    toml
   ];
 
   postPatch = ''

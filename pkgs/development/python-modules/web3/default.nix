@@ -16,16 +16,12 @@
 , requests
 , typing-extensions
 , websockets
-# , eth-tester
-# , py-geth
-, pytestCheckHook
 , pythonOlder
-, pythonRelaxDepsHook
 }:
 
 buildPythonPackage rec {
   pname = "web3";
-  version = "5.31.1";
+  version = "6.5.0";
   format = "setuptools";
 
   disabled = pythonOlder "3.7";
@@ -34,12 +30,8 @@ buildPythonPackage rec {
     owner = "ethereum";
     repo = "web3.py";
     rev = "v${version}";
-    hash = "sha256-YsAbPI9Y6z+snKZ9NsA0YSpB38n+ra4+Ei6COYFe8v4=";
+    hash = "sha256-RNWCZQjcse415SSNkHhMWckDcBJGFZnjisckF7gbYY8=";
   };
-
-  nativeBuildInputs = [
-    pythonRelaxDepsHook
-  ];
 
   propagatedBuildInputs = [
     aiohttp
@@ -60,17 +52,12 @@ buildPythonPackage rec {
     typing-extensions
   ] ++ eth-hash.optional-dependencies.pycryptodome;
 
-  pythonRelaxDeps = true;
-
-  # TODO: package eth-tester
-  #nativeCheckInputs = [
-  #  eth-tester
-  #  eth-tester.optional-dependencies.py-evm
-  #  py-geth
-  #  pytestCheckHook
-  #];
-
+  # TODO: package eth-tester required for tests
   doCheck = false;
+
+  postPatch = ''
+    substituteInPlace setup.py --replace "types-protobuf==3.19.13" "types-protobuf"
+  '';
 
   pythonImportsCheck = [
     "web3"
@@ -80,6 +67,6 @@ buildPythonPackage rec {
     description = "Web3 library for interactions";
     homepage = "https://github.com/ethereum/web3";
     license = licenses.mit;
-    maintainers = with maintainers; [ raitobezarius ];
+    maintainers = with maintainers; [ ];
   };
 }

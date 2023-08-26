@@ -112,15 +112,16 @@ let
       noDepEntry fullDepEntry packEntry stringAfter;
     inherit (self.customisation) overrideDerivation makeOverridable
       callPackageWith callPackagesWith extendDerivation hydraJob
-      makeScope makeScopeWithSplicing;
+      makeScope makeScopeWithSplicing makeScopeWithSplicing';
     inherit (self.derivations) lazyDerivation;
     inherit (self.meta) addMetaAttrs dontDistribute setName updateName
       appendToName mapDerivationAttrset setPrio lowPrio lowPrioSet hiPrio
-      hiPrioSet getLicenseFromSpdxId getExe;
-    inherit (self.sources) pathType pathIsDirectory cleanSourceFilter
+      hiPrioSet getLicenseFromSpdxId getExe getExe';
+    inherit (self.filesystem) pathType pathIsDirectory pathIsRegularFile;
+    inherit (self.sources) cleanSourceFilter
       cleanSource sourceByRegex sourceFilesBySuffices
       commitIdFromGitRepo cleanSourceWith pathHasContext
-      canCleanSource pathIsRegularFile pathIsGitRepo;
+      canCleanSource pathIsGitRepo;
     inherit (self.modules) evalModules setDefaultModuleLocation
       unifyModuleSyntax applyModuleArgsIfFunction mergeModules
       mergeModules' mergeOptionDecls evalOptionValue mergeDefinitions
@@ -137,7 +138,7 @@ let
       mergeDefaultOption mergeOneOption mergeEqualOption mergeUniqueOption
       getValues getFiles
       optionAttrSetToDocList optionAttrSetToDocList'
-      scrubOptionValue literalExpression literalExample literalDocBook
+      scrubOptionValue literalExpression literalExample
       showOption showOptionWithDefLocs showFiles
       unknownModule mkOption mkPackageOption mkPackageOptionMD
       mdDoc literalMD;

@@ -28,13 +28,13 @@
 
 buildPythonPackage rec {
   pname = "drf-spectacular";
-  version = "0.26.0";
+  version = "0.26.4";
 
   src = fetchFromGitHub {
     owner = "tfranzel";
     repo = "drf-spectacular";
-    rev = version;
-    hash = "sha256-yq+aTkoHI3zSsrYjokbn5UoPm/43LCnyTqdFtkrU92M=";
+    rev = "refs/tags/${version}";
+    hash = "sha256-f8x4QOt2EbDv+NlYAmpzXrCdT+q4wLGIrDsuUd45j2U=";
   };
 
   propagatedBuildInputs = [
@@ -78,6 +78,6 @@ buildPythonPackage rec {
     homepage = "https://github.com/tfranzel/drf-spectacular";
     changelog = "https://github.com/tfranzel/drf-spectacular/releases/tag/${version}";
     license = licenses.bsd3;
-    maintainers = with maintainers; [ SuperSandro2000 ];
+    maintainers = with maintainers; [ ];
   };
 }

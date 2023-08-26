@@ -9,11 +9,6 @@ let
   # remove null values from the final configuration
   finalSettings = lib.filterAttrsRecursive (_: v: v != null) cfg.settings;
   configFile = format.generate "homeserver.yaml" finalSettings;
-  logConfigFile = format.generate "log_config.yaml" cfg.logConfig;
-
-  pluginsEnv = cfg.package.python.buildEnv.override {
-    extraLibs = cfg.plugins;
-  };
 
   usePostgresql = cfg.settings.database.name == "psycopg2";
   hasLocalPostgresDB = let args = cfg.settings.database.args; in
@@ -50,6 +45,29 @@ let
             "${bindAddress}"
         }:${builtins.toString listener.port}/"
     '';
+
+  defaultExtras = [
+    "systemd"
+    "postgres"
+    "url-preview"
+    "user-search"
+  ];
+
+  wantedExtras = cfg.extras
+    ++ lib.optional (cfg.settings ? oidc_providers) "oidc"
+    ++ lib.optional (cfg.settings ? jwt_config) "jwt"
+    ++ lib.optional (cfg.settings ? saml2_config) "saml2"
+    ++ lib.optional (cfg.settings ? opentracing) "opentracing"
+    ++ lib.optional (cfg.settings ? redis) "redis"
+    ++ lib.optional (cfg.settings ? sentry) "sentry"
+    ++ lib.optional (cfg.settings ? user_directory) "user-search"
+    ++ lib.optional (cfg.settings.url_preview_enabled) "url-preview"
+    ++ lib.optional (cfg.settings.database.name == "psycopg2") "postgres";
+
+  wrapped = pkgs.matrix-synapse.override {
+    extras = wantedExtras;
+    inherit (cfg) plugins;
+  };
 in {
 
   imports = [
@@ -60,7 +78,7 @@ in {
     '')
     (mkRemovedOptionModule [ "services" "matrix-synapse" "create_local_database" ] ''
       Database configuration must be done manually. An exemplary setup is demonstrated in
-      <nixpkgs/nixos/tests/matrix-synapse.nix>
+      <nixpkgs/nixos/tests/matrix/synapse.nix>
     '')
     (mkRemovedOptionModule [ "services" "matrix-synapse" "web_client" ] "")
     (mkRemovedOptionModule [ "services" "matrix-synapse" "room_invite_state_types" ] ''
@@ -151,10 +169,53 @@ in {
 
       package = mkOption {
         type = types.package;
-        default = pkgs.matrix-synapse;
-        defaultText = literalExpression "pkgs.matrix-synapse";
+        readOnly = true;
         description = lib.mdDoc ''
-          Overridable attribute of the matrix synapse server package to use.
+          Reference to the `matrix-synapse` wrapper with all extras
+          (e.g. for `oidc` or `saml2`) added to the `PYTHONPATH` of all executables.
+
+          This option is useful to reference the "final" `matrix-synapse` package that's
+          actually used by `matrix-synapse.service`. For instance, when using
+          workers, it's possible to run
+          `''${config.services.matrix-synapse.package}/bin/synapse_worker` and
+          no additional PYTHONPATH needs to be specified for extras or plugins configured
+          via `services.matrix-synapse`.
+
+          However, this means that this option is supposed to be only declared
+          by the `services.matrix-synapse` module itself and is thus read-only.
+          In order to modify `matrix-synapse` itself, use an overlay to override
+          `pkgs.matrix-synapse-unwrapped`.
+        '';
+      };
+
+      extras = mkOption {
+        type = types.listOf (types.enum (lib.attrNames pkgs.matrix-synapse-unwrapped.optional-dependencies));
+        default = defaultExtras;
+        example = literalExpression ''
+          [
+            "cache-memory" # Provide statistics about caching memory consumption
+            "jwt"          # JSON Web Token authentication
+            "opentracing"  # End-to-end tracing support using Jaeger
+            "oidc"         # OpenID Connect authentication
+            "postgres"     # PostgreSQL database backend
+            "redis"        # Redis support for the replication stream between worker processes
+            "saml2"        # SAML2 authentication
+            "sentry"       # Error tracking and performance metrics
+            "systemd"      # Provide the JournalHandler used in the default log_config
+            "url-preview"  # Support for oEmbed URL previews
+            "user-search"  # Support internationalized domain names in user-search
+          ]
+        '';
+        description = lib.mdDoc ''
+          Explicitly install extras provided by matrix-synapse. Most
+          will require some additional configuration.
+
+          Extras will automatically be enabled, when the relevant
+          configuration sections are present.
+
+          Please note that this option is additive: i.e. when adding a new item
+          to this list, the defaults are still kept. To override the defaults as well,
+          use `lib.mkForce`.
         '';
       };
 
@@ -193,7 +254,7 @@ in {
         default = {};
         description = mdDoc ''
           The primary synapse configuration. See the
-          [sample configuration](https://github.com/matrix-org/synapse/blob/v${cfg.package.version}/docs/sample_config.yaml)
+          [sample configuration](https://github.com/matrix-org/synapse/blob/v${pkgs.matrix-synapse-unwrapped.version}/docs/sample_config.yaml)
           for possible values.
 
           Secrets should be passed in by using the `extraConfigFiles` option.
@@ -636,28 +697,13 @@ in {
 
             trusted_key_servers = mkOption {
               type = types.listOf (types.submodule {
+                freeformType = format.type;
                 options = {
                   server_name = mkOption {
                     type = types.str;
                     example = "matrix.org";
                     description = lib.mdDoc ''
                       Hostname of the trusted server.
-                    '';
-                  };
-
-                  verify_keys = mkOption {
-                    type = types.nullOr (types.attrsOf types.str);
-                    default = null;
-                    example = literalExpression ''
-                      {
-                        "ed25519:auto" = "Noi6WqcDj0QmPxCNQqgezwTlBKrfqehY1u2FyWP9uYw";
-                      }
-                    '';
-                    description = lib.mdDoc ''
-                      Attribute set from key id to base64 encoded public key.
-
-                      If specified synapse will check that the response is signed
-                      by at least one of the given keys.
                     '';
                   };
                 };
@@ -711,7 +757,7 @@ in {
 
             If you
             - try to deploy a fresh synapse, you need to configure the database yourself. An example
-              for this can be found in <nixpkgs/nixos/tests/matrix-synapse.nix>
+              for this can be found in <nixpkgs/nixos/tests/matrix/synapse.nix>
             - update your existing matrix-synapse instance, you simply need to add `services.postgresql.enable = true`
               to your configuration.
 
@@ -721,6 +767,10 @@ in {
     ];
 
     services.matrix-synapse.configFile = configFile;
+    services.matrix-synapse.package = wrapped;
+
+    # default them, so they are additive
+    services.matrix-synapse.extras = defaultExtras;
 
     users.users.matrix-synapse = {
       group = "matrix-synapse";
@@ -744,9 +794,7 @@ in {
           --keys-directory ${cfg.dataDir} \
           --generate-keys
       '';
-      environment = {
-        PYTHONPATH = makeSearchPathOutput "lib" cfg.package.python.sitePackages [ pluginsEnv ];
-      } // optionalAttrs (cfg.withJemalloc) {
+      environment = optionalAttrs (cfg.withJemalloc) {
         LD_PRELOAD = "${pkgs.jemalloc}/lib/libjemalloc.so";
       };
       serviceConfig = {
@@ -755,8 +803,8 @@ in {
         Group = "matrix-synapse";
         WorkingDirectory = cfg.dataDir;
         ExecStartPre = [ ("+" + (pkgs.writeShellScript "matrix-synapse-fix-permissions" ''
-          chown matrix-synapse:matrix-synapse ${cfg.dataDir}/homeserver.signing.key
-          chmod 0600 ${cfg.dataDir}/homeserver.signing.key
+          chown matrix-synapse:matrix-synapse ${cfg.settings.signing_key_path}
+          chmod 0600 ${cfg.settings.signing_key_path}
         '')) ];
         ExecStart = ''
           ${cfg.package}/bin/synapse_homeserver \

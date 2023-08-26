@@ -12,22 +12,23 @@
 , libpulseaudio
 , pipewire
 , alsa-utils
+, which
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "teams-for-linux";
-  version = "1.0.53";
+  version = "1.3.2";
 
   src = fetchFromGitHub {
     owner = "IsmaelMartinez";
-    repo = pname;
-    rev = "v${version}";
-    sha256 = "sha256-zigcOshtRQuQxJBXPWVmTjj5+4AorR5WW8lHVInUKFg=";
+    repo = "teams-for-linux";
+    rev = "v${finalAttrs.version}";
+    hash = "sha256-2WoTbkRGH9l6cQrveyxGvO/Dy+0NV4UTDaooYn8k06s=";
   };
 
   offlineCache = fetchYarnDeps {
-    yarnLock = "${src}/yarn.lock";
-    sha256 = "sha256-3zjmVIPQ+F2jPQ2xkAv5hQUjr8k5jIHTsa73J+IMayw=";
+    yarnLock = "${finalAttrs.src}/yarn.lock";
+    hash = "sha256-j5N6d270myUylDVDFQTScbsGp1wlpt5sISDJBRCV/GU=";
   };
 
   nativeBuildInputs = [ yarn fixup_yarn_lock nodejs copyDesktopItems makeWrapper ];
@@ -71,7 +72,7 @@ stdenv.mkDerivation rec {
     # Linux needs 'aplay' for notification sounds, 'libpulse' for meeting sound, and 'libpipewire' for screen sharing
     makeWrapper '${electron}/bin/electron' "$out/bin/teams-for-linux" \
       ${lib.optionalString stdenv.isLinux ''
-        --prefix PATH : ${lib.makeBinPath [ alsa-utils ]} \
+        --prefix PATH : ${lib.makeBinPath [ alsa-utils which ]} \
         --prefix LD_LIBRARY_PATH : ${lib.makeLibraryPath [ libpulseaudio pipewire ]} \
       ''} \
       --add-flags "$out/share/teams-for-linux/app.asar" \
@@ -81,20 +82,22 @@ stdenv.mkDerivation rec {
   '';
 
   desktopItems = [(makeDesktopItem {
-    name = pname;
-    exec = pname;
-    icon = pname;
+    name = finalAttrs.pname;
+    exec = finalAttrs.pname;
+    icon = finalAttrs.pname;
     desktopName = "Microsoft Teams for Linux";
-    comment = meta.description;
+    comment = finalAttrs.meta.description;
     categories = [ "Network" "InstantMessaging" "Chat" ];
   })];
 
-  meta = with lib; {
+  passthru.updateScript = ./update.sh;
+
+  meta = {
     description = "Unofficial Microsoft Teams client for Linux";
     homepage = "https://github.com/IsmaelMartinez/teams-for-linux";
-    license = licenses.gpl3Only;
-    maintainers = with maintainers; [ muscaln lilyinstarlight ];
-    platforms = platforms.unix;
+    license = lib.licenses.gpl3Only;
+    maintainers = with lib.maintainers; [ muscaln lilyinstarlight ];
+    platforms = lib.platforms.unix;
     broken = stdenv.isDarwin;
   };
-}
+})

@@ -23,13 +23,12 @@
 , limesuite
 , libbladeRF
 , mbelib
-, mkDerivation
 , ninja
-, ocl-icd
 , opencv3
 , pkg-config
 , qtcharts
 , qtdeclarative
+, qtgamepad
 , qtgraphicaleffects
 , qtlocation
 , qtmultimedia
@@ -45,21 +44,27 @@
 , sgp4
 , soapysdr-with-plugins
 , uhd
+, wrapQtAppsHook
 , zlib
 }:
 
-mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "sdrangel";
-  version = "7.10.0";
+  version = "7.15.2";
 
   src = fetchFromGitHub {
     owner = "f4exb";
     repo = "sdrangel";
-    rev = "v${version}";
-    hash = "sha256-hsYt7zGG6CSWeQ9A3GPt65efjZGPu33O5pIhnZjFgmY=";
+    rev = "v${finalAttrs.version}";
+    hash = "sha256-Yvf0LJu7YbXhW3i0fd5R2KVn2dkx484AZ0XaWhjozFE=";
   };
 
-  nativeBuildInputs = [ cmake ninja pkg-config ];
+  nativeBuildInputs = [
+    cmake
+    ninja
+    pkg-config
+    wrapQtAppsHook
+  ];
 
   buildInputs = [
     airspy
@@ -86,6 +91,7 @@ mkDerivation rec {
     opencv3
     qtcharts
     qtdeclarative
+    qtgamepad
     qtgraphicaleffects
     qtlocation
     qtmultimedia
@@ -106,24 +112,20 @@ mkDerivation rec {
 
   cmakeFlags = [
     "-DAPT_DIR=${aptdec}"
-    "-DDAB_INCLUDE_DIR:PATH=${dab_lib}/include/dab_lib"
-    "-DLIBSERIALDV_INCLUDE_DIR:PATH=${serialdv}/include/serialdv"
-    "-DLIMESUITE_INCLUDE_DIR:PATH=${limesuite}/include"
-    "-DLIMESUITE_LIBRARY:FILEPATH=${limesuite}/lib/libLimeSuite${stdenv.hostPlatform.extensions.sharedLibrary}"
+    "-DDAB_DIR=${dab_lib}"
     "-DSGP4_DIR=${sgp4}"
     "-DSOAPYSDR_DIR=${soapysdr-with-plugins}"
+    "-Wno-dev"
   ];
 
-  LD_LIBRARY_PATH = "${ocl-icd}/lib";
-
-  meta = with lib; {
+  meta = {
     description = "Software defined radio (SDR) software";
+    homepage = "https://github.com/f4exb/sdrangel";
+    license = lib.licenses.gpl3Plus;
     longDescription = ''
       SDRangel is an Open Source Qt5 / OpenGL 3.0+ SDR and signal analyzer frontend to various hardware.
     '';
-    homepage = "https://github.com/f4exb/sdrangel";
-    license = licenses.gpl3Plus;
-    maintainers = with maintainers; [ alkeryn Tungsten842 ];
-    platforms = platforms.unix;
+    maintainers = with lib.maintainers; [ alkeryn Tungsten842 ];
+    platforms = lib.platforms.unix;
   };
-}
+})

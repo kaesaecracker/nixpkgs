@@ -30,7 +30,7 @@ in
 
 stdenv.mkDerivation rec {
   pname = "ipxe";
-  version = "unstable-2023-03-15";
+  version = "unstable-2023-07-19";
 
   nativeBuildInputs = [ gnu-efi mtools openssl perl xorriso xz ] ++ lib.optional stdenv.hostPlatform.isx86 syslinux;
   depsBuildBuild = [ buildPackages.stdenv.cc ];
@@ -40,8 +40,8 @@ stdenv.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "ipxe";
     repo = "ipxe";
-    rev = "09e8a154084c57311463408e3f2e412c305a9638";
-    sha256 = "pAZs3CyFPH1tiMo3Te2DN3lahzmNTX9kqNvfZLDF6BQ=";
+    rev = "c1834f323f4f6b9b46cd5895b1457a117381363f";
+    hash = "sha256-fJeDgm+OaItshWFliq08Y0BPDD2FCkezeEp7trqWNjA=";
   };
 
   postPatch = lib.optionalString stdenv.hostPlatform.isAarch64 ''

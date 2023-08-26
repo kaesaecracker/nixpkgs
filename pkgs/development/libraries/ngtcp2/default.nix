@@ -8,13 +8,13 @@
 
 stdenv.mkDerivation rec {
   pname = "ngtcp2";
-  version = "0.14.0";
+  version = "0.17.0";
 
   src = fetchFromGitHub {
     owner = "ngtcp2";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-6XHOMBsgKSVwpTwQlIt+H9tRPF8YBjfOLmHtdC/LVlE=";
+    hash = "sha256-vY3RooC8ttezru6vAqbG1MU5uZhD8fLnlEYVYS3pFRk=";
   };
 
   outputs = [ "out" "dev" "doc" ];
@@ -26,6 +26,13 @@ stdenv.mkDerivation rec {
   cmakeFlags = [
     "-DENABLE_STATIC_LIB=OFF"
   ];
+
+  preConfigure = ''
+    # https://github.com/ngtcp2/ngtcp2/issues/858
+    # Fix ngtcp2_crypto_openssl remnants.
+    substituteInPlace crypto/includes/CMakeLists.txt \
+      --replace 'ngtcp2/ngtcp2_crypto_openssl.h' 'ngtcp2/ngtcp2_crypto_quictls.h'
+  '';
 
   doCheck = true;
   enableParallelBuilding = true;

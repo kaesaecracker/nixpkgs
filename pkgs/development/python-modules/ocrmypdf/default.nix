@@ -1,9 +1,9 @@
 { lib
 , buildPythonPackage
-, coloredlogs
 , deprecation
 , fetchFromGitHub
 , ghostscript
+, hypothesis
 , img2pdf
 , importlib-resources
 , jbig2enc
@@ -16,6 +16,7 @@
 , pytest-xdist
 , pytestCheckHook
 , pythonOlder
+, rich
 , reportlab
 , setuptools
 , setuptools-scm
@@ -29,7 +30,7 @@
 
 buildPythonPackage rec {
   pname = "ocrmypdf";
-  version = "14.0.4";
+  version = "14.4.0";
 
   disabled = pythonOlder "3.8";
 
@@ -45,7 +46,7 @@ buildPythonPackage rec {
     postFetch = ''
       rm "$out/.git_archival.txt"
     '';
-    hash = "sha256-SLWpMkXq5DlmVgDfRAHtYfEUAVpVKgtnJKO2ffyH5cU=";
+    hash = "sha256-i1ZUBKR8dJXZkALUFwkzYcjtZ5Li66DfD2fupCGRQC4=";
   };
 
   SETUPTOOLS_SCM_PRETEND_VERSION = version;
@@ -68,7 +69,6 @@ buildPythonPackage rec {
   ];
 
   propagatedBuildInputs = [
-    coloredlogs
     deprecation
     img2pdf
     packaging
@@ -77,6 +77,7 @@ buildPythonPackage rec {
     pillow
     pluggy
     reportlab
+    rich
     tqdm
   ] ++ lib.optionals (pythonOlder "3.9") [
     importlib-resources
@@ -85,6 +86,7 @@ buildPythonPackage rec {
   ];
 
   nativeCheckInputs = [
+    hypothesis
     pytest-xdist
     pytestCheckHook
   ];

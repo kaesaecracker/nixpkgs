@@ -1,4 +1,4 @@
-{ lib, stdenv, callPackage, rustPlatform, fetchFromGitHub, fetchurl, nixosTests
+{ lib, stdenv, callPackage, rustPlatform, fetchFromGitHub, nixosTests
 , pkg-config, openssl
 , libiconv, Security, CoreServices
 , dbBackend ? "sqlite", libmysqlclient, postgresql }:
@@ -9,19 +9,19 @@ in
 
 rustPlatform.buildRustPackage rec {
   pname = "vaultwarden";
-  version = "1.27.0";
+  version = "1.29.1";
 
   src = fetchFromGitHub {
     owner = "dani-garcia";
     repo = pname;
     rev = version;
-    hash = "sha256-QvU1Y3syr6PZbTRebbZF4sEzI4lIj1enJe2F/gGfvQM=";
+    hash = "sha256-uASoPZRBQ9IKJHtMGeeZzmr0fCYDWl56EzaJVj6LwMk=";
   };
 
   cargoLock = {
     lockFile = ./Cargo.lock;
     outputHashes = {
-      "multer-2.0.4" = "sha256-962onbcPUjkoIGSQTnF8m1fkamwThpPj4uBJ8EqbouQ=";
+      "rocket-0.5.0-rc.3" = "sha256-E71cktkHCbmQyjkjWWJ20KfCm3B/h3jQ2TMluYhvCQw=";
     };
   };
 
@@ -30,10 +30,6 @@ rustPlatform.buildRustPackage rec {
     ++ optionals stdenv.isDarwin [ libiconv Security CoreServices ]
     ++ optional (dbBackend == "mysql") libmysqlclient
     ++ optional (dbBackend == "postgresql") postgresql;
-
-  # vaultwarden depends on rocket v0.5.0-dev, which requires nightly features.
-  # This may be removed if https://github.com/dani-garcia/vaultwarden/issues/712 is fixed.
-  RUSTC_BOOTSTRAP = 1;
 
   buildFeatures = dbBackend;
 
@@ -46,7 +42,7 @@ rustPlatform.buildRustPackage rec {
   meta = with lib; {
     description = "Unofficial Bitwarden compatible server written in Rust";
     homepage = "https://github.com/dani-garcia/vaultwarden";
-    license = licenses.gpl3Only;
+    license = licenses.agpl3Only;
     maintainers = with maintainers; [ msteen ivan ];
   };
 }

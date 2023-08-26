@@ -7,8 +7,6 @@
 , pkg-config
 , perl
 , fontconfig
-, copyDesktopItems
-, makeDesktopItem
 , glib
 , gtk3
 , openssl
@@ -24,13 +22,13 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "lapce";
-  version = "0.2.5";
+  version = "0.2.8";
 
   src = fetchFromGitHub {
     owner = "lapce";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-WFFn1l7d70x5v6jo5m+Thq1WoZjY7f8Lvr3U473xx48=";
+    sha256 = "sha256-cfQQ+PaInUB6B61sZ9iS/zt3L6Vc/vPOJTtEwR0BLco=";
   };
 
   cargoLock = {
@@ -39,13 +37,15 @@ rustPlatform.buildRustPackage rec {
       "druid-0.7.0" = "sha256-PJH+Y5PScM6KnPeb5lBLKpqe9nbG3bXIJK2y4V1IM9o=";
       "font-kit-0.11.0" = "sha256-MsUbFhWd3GdqchzwrRPuzpz3mNYde00HwA9EIRBc2SQ=";
       "fount-0.1.0" = "sha256-ptPnisGuzip3tQUuwtPU+ETiIzxMvIgAvlIGyGw/4wI=";
+      "human-sort-0.2.2" = "sha256-tebgIJGXOY7pwWRukboKAzXY47l4Cn//0xMKQTaGu8w=";
       "parley-0.1.0" = "sha256-9xT+bhcZSBxQp10cbxQlqiG4D4NxaTkAxfgaHX0cqX4=";
       "piet-wgpu-0.1.0" = "sha256-SOycknxo6wMDy/2D3cxsngI0MZO78B5QkhdCkvCkFyU=";
-      "psp-types-0.1.0" = "sha256-g8IP1z3Qfpabs+zHsJbwWrKureyRx1mtucTt5KWANw4=";
+      "psp-types-0.1.0" = "sha256-7scU/eR6S2hVS6UKoFmZP901DMZEEho35nVEuQJERR0=";
       "structdesc-0.1.0" = "sha256-4j6mJ1H5hxJXr7Sz0UsZxweyAm9sYuxjq8yg3ZlpksI=";
       "swash-0.1.4" = "sha256-oPjQF/nKnoHyed+4SZcc4zlc/I+0J6/DuigbHglQPMA=";
       "tree-sitter-bash-0.19.0" = "sha256-gTsA874qpCI/N5tmBI5eT8KDaM25gXM4VbcCbUU2EeI=";
       "tree-sitter-c-sharp-0.20.0" = "sha256-4R6+15ZbtC/LtSHpk7DqcMiFYjht+062Av31spK07rc=";
+      "tree-sitter-clojure-0.1.0" = "sha256-qeTQgJ3DAlqhRlATB34aPNzAgKOyIaxfKiZP9Z3Mx2k=";
       "tree-sitter-css-0.19.0" = "sha256-xXDTi9HL46qHoeyf2ZQJRCIYCY4vWBmTBkt55EewgmQ=";
       "tree-sitter-d-0.3.2" = "sha256-oWbggHlWVxc5QsHDvOVcWvjykLPmFuuoxkqgen7He4A=";
       "tree-sitter-dart-0.0.1" = "sha256-JW9Hdzm/Sb56od+K/Wf0IlcfpgiEVY5e3ovOtMEeqpQ=";
@@ -59,7 +59,7 @@ rustPlatform.buildRustPackage rec {
       "tree-sitter-hcl-0.0.1" = "sha256-GWUOATMa6ANnhH5k+P9GcCNQQnhqpyfblUG90rQN0iw=";
       "tree-sitter-java-0.20.0" = "sha256-tGBi6gJJIPpp6oOwmAQdqBD6eaJRBRcYbWtm1BHsgBA=";
       "tree-sitter-json-0.20.0" = "sha256-pXa6WFJ4wliXHBiuHuqtAFWz+OscTOxbna5iymS547w=";
-      "tree-sitter-julia-0.19.0" = "sha256-KrhpVO3qskdHf5H+Ud0qfb0fPYpbSOzLRlK/dlycRAk=";
+      "tree-sitter-julia-0.19.0" = "sha256-z+E3sYS9fMBWlSmy/3wiQRzhrYhhNK5xH6MK1FroMi8=";
       "tree-sitter-kotlin-0.2.11" = "sha256-aRMqhmZKbKoggtBOgtFIq0xTP+PgeD3Qz6DPJsAFPRQ=";
       "tree-sitter-latex-0.2.0" = "sha256-0n42ZrlQdo1IbrURVJkcKV2JeQ7jUI2eSW7dkC1aXH4=";
       "tree-sitter-lua-0.0.12" = "sha256-0gViT7PjduQsTTi4e0VVUFiXJjmrjFBnWdGY0B4iS/0=";
@@ -82,11 +82,14 @@ rustPlatform.buildRustPackage rec {
     };
   };
 
+  postPatch = ''
+    substituteInPlace lapce-ui/Cargo.toml --replace ", \"lapce-data/updater\"" ""
+  '';
+
   nativeBuildInputs = [
     cmake
     pkg-config
     perl
-    copyDesktopItems
     wrapGAppsHook # FIX: No GSettings schemas are installed on the system
     gobject-introspection
   ];
@@ -110,18 +113,9 @@ rustPlatform.buildRustPackage rec {
   ];
 
   postInstall = ''
-    install -Dm0644 $src/extra/images/logo.svg $out/share/icons/hicolor/scalable/apps/lapce.svg
+    install -Dm0644 $src/extra/images/logo.svg $out/share/icons/hicolor/scalable/apps/dev.lapce.lapce.svg
+    install -Dm0644 $src/extra/linux/dev.lapce.lapce.desktop $out/share/applications/lapce.desktop
   '';
-
-  desktopItems = [ (makeDesktopItem {
-    name = "lapce";
-    exec = "lapce %F";
-    icon = "lapce";
-    desktopName = "Lapce";
-    comment = meta.description;
-    genericName = "Code Editor";
-    categories = [ "Development" "Utility" "TextEditor" ];
-  }) ];
 
   passthru.updateScript = nix-update-script { };
 

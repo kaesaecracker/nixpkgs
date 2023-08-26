@@ -87,7 +87,7 @@ buildPythonPackage rec {
     "pyarrow"
   ];
 
-  sourceRoot = "source/sdks/python";
+  sourceRoot = "${src.name}/sdks/python";
 
   nativeBuildInputs = [
     cython
@@ -200,6 +200,8 @@ buildPythonPackage rec {
     "test_get_output_batch_type"
     "test_pformat_namedtuple_with_unnamed_fields"
     "test_row_coder_fail_early_bad_schema"
+    # See https://github.com/apache/beam/issues/26004.
+    "test_batch_encode_decode"
   ];
 
   meta = with lib; {
@@ -207,6 +209,7 @@ buildPythonPackage rec {
     homepage = "https://beam.apache.org/";
     license = licenses.asl20;
     maintainers = with maintainers; [ ndl ];
-    broken = true;
+    # https://github.com/apache/beam/issues/27221
+    broken = lib.versionAtLeast pandas.version "2";
   };
 }

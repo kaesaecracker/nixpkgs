@@ -12,24 +12,26 @@
 , voluptuous
 , websocket-client
 , xmltodict
+, wheel
 }:
 
 buildPythonPackage rec {
   pname = "hahomematic";
-  version = "2023.2.11";
+  version = "2023.8.11";
   format = "pyproject";
 
-  disabled = pythonOlder "3.9";
+  disabled = pythonOlder "3.11";
 
   src = fetchFromGitHub {
     owner = "danielperna84";
     repo = pname;
     rev = "refs/tags/${version}";
-    hash = "sha256-Nrq7Bc9Lzdle8/rINp/GPy+DWANgMe7WCLP48gHohIo=";
+    hash = "sha256-EDpOCZlWIb1WChO4/k37WDkA4LT4Wy8tcMpThMgCQoU=";
   };
 
   nativeBuildInputs = [
     setuptools
+    wheel
   ];
 
   propagatedBuildInputs = [
@@ -44,9 +46,6 @@ buildPythonPackage rec {
     pytest-aiohttp
     pytestCheckHook
   ];
-
-  # Starting with 0.30 the tests are broken, check with the next major release
-  doCheck = false;
 
   pythonImportsCheck = [
     "hahomematic"

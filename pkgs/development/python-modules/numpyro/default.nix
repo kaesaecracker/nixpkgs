@@ -1,37 +1,41 @@
 { lib
 , buildPythonPackage
+, pythonOlder
 , fetchPypi
 , jax
 , jaxlib
 , multipledispatch
 , numpy
-, pytestCheckHook
-, pythonOlder
 , tqdm
+, funsor
+, pytestCheckHook
+, tensorflow-probability
 }:
 
 buildPythonPackage rec {
   pname = "numpyro";
-  version = "0.11.0";
+  version = "0.12.1";
   format = "setuptools";
 
-  disabled = pythonOlder "3.7";
+  disabled = pythonOlder "3.8";
 
   src = fetchPypi {
     inherit version pname;
-    hash = "sha256-01fdGgFZ+G1FwjNwitM6PT1TQx0FtLvs4dBorkFoqo4=";
+    hash = "sha256-S3ifL/KPOJQcyBEYoE1XGxPLmSfh1uT9wJG/YtABBKQ=";
   };
 
   propagatedBuildInputs = [
     jax
     jaxlib
-    numpy
     multipledispatch
+    numpy
     tqdm
   ];
 
   nativeCheckInputs = [
+    funsor
     pytestCheckHook
+    tensorflow-probability
   ];
 
   pythonImportsCheck = [
@@ -46,11 +50,16 @@ buildPythonPackage rec {
     "test_gamma_poisson"
     "test_gof"
     "test_hpdi"
+    "test_kl_dirichlet_dirichlet"
     "test_kl_univariate"
     "test_mean_var"
     # Tests want to download data
     "data_load"
     "test_jsb_chorales"
+    # RuntimeWarning: overflow encountered in cast
+    "test_zero_inflated_logits_probs_agree"
+    # NameError: unbound axis name: _provenance
+    "test_model_transformation"
   ];
 
   meta = with lib; {

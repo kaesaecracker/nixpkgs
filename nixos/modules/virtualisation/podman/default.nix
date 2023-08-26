@@ -142,6 +142,7 @@ in
     defaultNetwork.settings = lib.mkOption {
       type = json.type;
       default = { };
+      example = lib.literalExpression "{ dns_enabled = true; }";
       description = lib.mdDoc ''
         Settings for podman's default network.
       '';
@@ -149,7 +150,7 @@ in
 
   };
 
-  config = lib.mkIf cfg.enable (lib.mkMerge [
+  config = lib.mkIf cfg.enable
     {
       environment.systemPackages = [ cfg.package ]
         ++ lib.optional cfg.dockerCompat dockerCompat;
@@ -205,6 +206,11 @@ in
 
       systemd.user.sockets.podman.wantedBy = [ "sockets.target" ];
 
+      systemd.timers.podman-prune.timerConfig = lib.mkIf cfg.autoPrune.enable {
+        Persistent = true;
+        RandomizedDelaySec = 1800;
+      };
+
       systemd.tmpfiles.packages = [
         # The /run/podman rule interferes with our podman group, so we remove
         # it and let the systemd socket logic take care of it.
@@ -235,6 +241,5 @@ in
           '';
         }
       ];
-    }
-  ]);
+    };
 }

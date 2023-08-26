@@ -1,18 +1,17 @@
 { lib
-, stdenv
 , fetchurl
-, fetchpatch
-, cmake
+, stdenv
 , testers
+, cmake
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "geos";
-  version = "3.11.1";
+  version = "3.11.2";
 
   src = fetchurl {
     url = "https://download.osgeo.org/geos/${finalAttrs.pname}-${finalAttrs.version}.tar.bz2";
-    hash = "sha256-bQ6zz6n5LZR3Mcx18XUDVrO9/AfqAgVT2vavHHaOC+I=";
+    hash = "sha256-sfB3ZpSBxaPmKv/EnpbrBvKBmHpdNv2rIlIX5bgl5Mw=";
   };
 
   nativeBuildInputs = [ cmake ];
@@ -22,12 +21,11 @@ stdenv.mkDerivation (finalAttrs: {
   passthru.tests.pkg-config = testers.testMetaPkgConfig finalAttrs.finalPackage;
 
   meta = with lib; {
-    description = "C++ port of the Java Topology Suite (JTS)";
-    homepage = "https://trac.osgeo.org/geos";
+    description = "C/C++ library for computational geometry with a focus on algorithms used in geographic information systems (GIS) software";
+    homepage = "https://libgeos.org";
     license = licenses.lgpl21Only;
+    maintainers = teams.geospatial.members;
     pkgConfigModules = [ "geos" ];
-    maintainers = with lib.maintainers; [
-      willcohen
-    ];
+    mainProgram = "geosop";
   };
 })

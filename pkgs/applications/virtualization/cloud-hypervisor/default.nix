@@ -2,33 +2,35 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "cloud-hypervisor";
-  version = "30.0";
+  version = "34.0";
 
   src = fetchFromGitHub {
     owner = "cloud-hypervisor";
     repo = pname;
     rev = "v${version}";
-    sha256 = "sha256-emy4Sk/j9G+Ou/9h1Kgd70MgbpYMobAXyqAE2LJeOio=";
+    sha256 = "sha256-+uicO6tPLzwlA4/Fao2J8n82Qnt3C6OfqRxn1pVh7XE=";
+  };
+
+  cargoLock = {
+    lockFile = ./Cargo.lock;
+    outputHashes = {
+      "acpi_tables-0.1.0" = "sha256-OdtnF2fV6oun3NeCkXdaGU3U7ViBcgFKqHKdyZsRsPA=";
+      "kvm-bindings-0.6.0" = "sha256-wGdAuPwsgRIqx9dh0m+hC9A/Akz9qg9BM+p06Fi5ACM=";
+      "kvm-ioctls-0.13.0" = "sha256-jHnFGwBWnAa2lRu4a5eRNy1Y26NX5MV8alJ86VR++QE=";
+      "micro_http-0.1.0" = "sha256-w2witqKXE60P01oQleujmHSnzMKxynUGKWyq5GEh1Ew=";
+      "mshv-bindings-0.1.1" = "sha256-9Q7IXznZ+qdf/d4gO7qVEjbNUUygQDNYLNxz2BECLHc=";
+      "versionize_derive-0.1.4" = "sha256-oGuREJ5+FDs8ihmv99WmjIPpL2oPdOr4REk6+7cV/7o=";
+      "vfio-bindings-0.4.0" = "sha256-8zdpLD9e1TAwG+m6ifS7/Fh39fAs5VxtnS5gUj/eKmY=";
+      "vfio_user-0.1.0" = "sha256-b/gL6vPMW44O44lBIjqS+hgqVUUskBmttGk5UKIMgZk=";
+      "vhost-0.7.0" = "sha256-KdVROh44UzZJqtzxfM6gwAokzY6El8iDPfw2nnkmhiQ=";
+      "vm-fdt-0.2.0" = "sha256-lKW4ZUraHomSDyxgNlD5qTaBTZqM0Fwhhh/08yhrjyE=";
+    };
   };
 
   separateDebugInfo = true;
 
   nativeBuildInputs = [ pkg-config ];
   buildInputs = [ openssl ] ++ lib.optional stdenv.isAarch64 dtc;
-
-  cargoLock = {
-    lockFile = ./Cargo.lock;
-    outputHashes = {
-      "acpi_tables-0.1.0" = "sha256-uWzw1FwIUCVvf9VfJYVA6VcMDEhA7sl6lME6N61k1ic=";
-      "kvm-bindings-0.6.0" = "sha256-wGdAuPwsgRIqx9dh0m+hC9A/Akz9qg9BM+p06Fi5ACM=";
-      "micro_http-0.1.0" = "sha256-w2witqKXE60P01oQleujmHSnzMKxynUGKWyq5GEh1Ew=";
-      "mshv-bindings-0.1.1" = "sha256-ah6H43QRt39AmjpX9/2mxF3Jrbu14HH4CIUHTS1Mh0s=";
-      "versionize_derive-0.1.4" = "sha256-BPl294UqjVl8tThuvylXUFjFNjJx8OSfBGJLg8jIkWw=";
-      "vfio-bindings-0.4.0" = "sha256-NHzA+c1gAXtoCPLsZZ8mi+AGTpdxAfn5zlr04BCsbao=";
-      "vfio_user-0.1.0" = "sha256-IIwf7fmE6awpcgvWH/KWQY9tK3IHN+jkUGImQJFxnFM=";
-      "vm-fdt-0.2.0" = "sha256-dpUCj74FAjCM0BwxkSuByYIuqGcAisBy09Umhhyi0Jc=";
-    };
-  };
 
   OPENSSL_NO_VENDOR = true;
 

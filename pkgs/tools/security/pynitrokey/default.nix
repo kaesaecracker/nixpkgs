@@ -1,36 +1,44 @@
-{ python3Packages, lib, nrfutil  }:
+{ lib
+, python3Packages
+, fetchPypi
+, nrfutil
+, libnitrokey
+, nix-update-script
+}:
 
 with python3Packages;
 
 buildPythonApplication rec {
   pname = "pynitrokey";
-  version = "0.4.31";
+  version = "0.4.39";
   format = "flit";
 
   src = fetchPypi {
     inherit pname version;
-    sha256 = "sha256-nqw5wUzQxKCBzYBRhqB6v7WWrF1Ojf8z6Kf1YUA9+wU=";
+    hash = "sha256-KXYHeWwV9Tw1ZpO/vASHjDnceeb+1K0yIUohb7EcRAI=";
   };
 
   propagatedBuildInputs = [
+    certifi
+    cffi
     click
+    click-aliases
     cryptography
     ecdsa
+    frozendict
     fido2
     intelhex
+    nkdfu
     nrfutil
-    pyserial
+    python-dateutil
     pyusb
     requests
-    pygments
-    python-dateutil
+    semver
     spsdk
+    tqdm
     urllib3
-    cffi
-    cbor
-    nkdfu
-    fido2
     tlv8
+    typing-extensions
   ];
 
   nativeBuildInputs = [
@@ -38,14 +46,26 @@ buildPythonApplication rec {
   ];
 
   pythonRelaxDeps = [
+    "click"
     "cryptography"
+    "protobuf"
+    "python-dateutil"
     "spsdk"
+    "typing_extensions"
+  ];
+
+  # libnitrokey is not propagated to users of the pynitrokey Python package.
+  # It is only usable from the wrapped bin/nitropy
+  makeWrapperArgs = [
+    "--set LIBNK_PATH ${lib.makeLibraryPath [ libnitrokey ]}"
   ];
 
   # no tests
   doCheck = false;
 
   pythonImportsCheck = [ "pynitrokey" ];
+
+  passthru.updateScript = nix-update-script { };
 
   meta = with lib; {
     description = "Python client for Nitrokey devices";

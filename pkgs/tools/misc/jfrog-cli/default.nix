@@ -1,16 +1,20 @@
-{ buildGoModule, fetchFromGitHub, pkgs, lib }:
+{ lib
+, buildGoModule
+, fetchFromGitHub
+}:
 
 buildGoModule rec {
   pname = "jfrog-cli";
-  version = "2.35.0";
-  vendorHash = "sha256-vOYfm6V1SyfhT7gX/Nk01hD/Txwh5UXCorzi6Jfl9I8=";
+  version = "2.45.0";
 
   src = fetchFromGitHub {
     owner = "jfrog";
     repo = "jfrog-cli";
-    rev = "v${version}";
-    sha256 = "sha256-kaPGVNS+h+kZjG7+GupRxn6ypUfIU4BefPEl6QNA4cE=";
+    rev = "refs/tags/v${version}";
+    hash = "sha256-NSkSE1NZIwCCSlCo7hGWq82JvH48uI8fV2RIZHwS5JI=";
   };
+
+  vendorHash = "sha256-fk+Lhmb+LgjSuGlDfHkentF10TOgqIxbZ1VVGmAmkME=";
 
   postInstall = ''
     # Name the output the same way as the original build script does
@@ -23,8 +27,9 @@ buildGoModule rec {
   meta = with lib; {
     homepage = "https://github.com/jfrog/jfrog-cli";
     description = "Client for accessing to JFrog's Artifactory and Mission Control through their respective REST APIs";
+    changelog = "https://github.com/jfrog/jfrog-cli/releases/tag/v${version}";
     license = licenses.asl20;
     mainProgram = "jf";
-    maintainers = [ maintainers.detegr ];
+    maintainers = with maintainers; [ detegr ];
   };
 }

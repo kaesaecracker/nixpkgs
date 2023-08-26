@@ -1,5 +1,6 @@
 { lib
 , stdenv
+, fetchFromGitHub
 , fetchpatch
 , installShellFiles
 , ninja
@@ -12,15 +13,18 @@
 , OpenGL
 , AppKit
 , Cocoa
+, libxcrypt
 }:
 
 python3.pkgs.buildPythonApplication rec {
   pname = "meson";
-  version = "1.0.0";
+  version = "1.2.0";
 
-  src = python3.pkgs.fetchPypi {
-    inherit pname version;
-    hash = "sha256-qlCkukVXwl59SERqv96FeVfc31g4X/++Zwug6O+szgU=";
+  src = fetchFromGitHub {
+    owner = "mesonbuild";
+    repo = "meson";
+    rev = "refs/tags/${version}";
+    hash = "sha256-bJAmkE+sL9DqKpcjZdBf4/z9lz+m/o0Z87hlAwbVbTY=";
   };
 
   patches = [
@@ -71,13 +75,6 @@ python3.pkgs.buildPythonApplication rec {
         "docs/yaml/objects/dep.yaml"
       ];
     })
-
-    # tests: avoid unexpected failure when cmake is not installed
-    # https://github.com/mesonbuild/meson/pull/11321
-    (fetchpatch {
-      url = "https://github.com/mesonbuild/meson/commit/a38ad3039d0680f3ac34a6dc487776c79c48acf3.patch";
-      hash = "sha256-9YaXwc+F3Pw4BjuOXqva4MD6DAxX1k5WLbn0xzwuEmw=";
-    })
   ];
 
   setupHook = ./setup-hook.sh;
@@ -120,6 +117,10 @@ python3.pkgs.buildPythonApplication rec {
       --replace "python3 -c " "${python3.interpreter} -c "
   '';
 
+  buildInputs = lib.optionals (python3.pythonOlder "3.9") [
+    libxcrypt
+  ];
+
   nativeBuildInputs = [ installShellFiles ];
 
   postInstall = ''
@@ -140,7 +141,7 @@ python3.pkgs.buildPythonApplication rec {
       code.
     '';
     license = licenses.asl20;
-    maintainers = with maintainers; [ jtojnar mbe AndersonTorres ];
+    maintainers = with maintainers; [ mbe AndersonTorres ];
     inherit (python3.meta) platforms;
   };
 }

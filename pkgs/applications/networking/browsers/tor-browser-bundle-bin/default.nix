@@ -1,6 +1,8 @@
 { lib, stdenv
 , fetchurl
 , makeDesktopItem
+, writeText
+, callPackage
 
 # Common run-time dependencies
 , zlib
@@ -45,7 +47,7 @@
 # Hardening
 , graphene-hardened-malloc
 # Whether to use graphene-hardened-malloc
-, useHardenedMalloc ? true
+, useHardenedMalloc ? null
 
 # Whether to disable multiprocess support
 , disableContentSandbox ? false
@@ -54,7 +56,10 @@
 , extraPrefs ? ""
 }:
 
-let
+lib.warnIf (useHardenedMalloc != null)
+  "tor-browser-bundle-bin: useHardenedMalloc is deprecated and enabling it can cause issues"
+
+(let
   libPath = lib.makeLibraryPath libPkgs;
 
   libPkgs = [
@@ -87,11 +92,11 @@ let
   fteLibPath = lib.makeLibraryPath [ stdenv.cc.cc gmp ];
 
   # Upstream source
-  version = "12.0.3";
+  version = "12.5.2";
 
   lang = "ALL";
 
-  srcs = {
+  sources = {
     x86_64-linux = fetchurl {
       urls = [
         "https://dist.torproject.org/torbrowser/${version}/tor-browser-linux64-${version}_${lang}.tar.xz"
@@ -99,7 +104,7 @@ let
         "https://tor.eff.org/dist/torbrowser/${version}/tor-browser-linux64-${version}_${lang}.tar.xz"
         "https://tor.calyxinstitute.org/dist/torbrowser/${version}/tor-browser-linux64-${version}_${lang}.tar.xz"
       ];
-      hash = "sha256-bOGY/RdwD6O7QIuOiBw7OVnZfpumGGso6hwMJJwN2g0=";
+      hash = "sha256-Mm2/ianon+RtOJqmuZCl+2cPliKiJvIOZ+TyzJ8l5es=";
     };
 
     i686-linux = fetchurl {
@@ -109,15 +114,28 @@ let
         "https://tor.eff.org/dist/torbrowser/${version}/tor-browser-linux32-${version}_${lang}.tar.xz"
         "https://tor.calyxinstitute.org/dist/torbrowser/${version}/tor-browser-linux32-${version}_${lang}.tar.xz"
       ];
-      hash = "sha256-t1tnEZtiRig2r8GNJpqT+J0XoxCLMyUsI9tX6aa0lYk=";
+      hash = "sha256-mouxVi/Y5duIQXHYd8WcIzLZEXs5FZAt20dFq4vHzso=";
     };
   };
+
+  distributionIni = writeText "distribution.ini" (lib.generators.toINI {} {
+    # Some light branding indicating this build uses our distro preferences
+    Global = {
+      id = "nixos";
+      version = "1.0";
+      about = "Tor Browser for NixOS";
+    };
+  });
+
+  policiesJson = writeText "policies.json" (builtins.toJSON {
+    policies.DisableAppUpdate = true;
+  });
 in
 stdenv.mkDerivation rec {
   pname = "tor-browser-bundle-bin";
   inherit version;
 
-  src = srcs.${stdenv.hostPlatform.system} or (throw "unsupported system: ${stdenv.hostPlatform.system}");
+  src = sources.${stdenv.hostPlatform.system} or (throw "unsupported system: ${stdenv.hostPlatform.system}");
 
   preferLocalBuild = true;
   allowSubstitutes = false;
@@ -132,7 +150,9 @@ stdenv.mkDerivation rec {
     categories = [ "Network" "WebBrowser" "Security" ];
   };
 
-  buildCommand = ''
+  buildPhase = ''
+    runHook preBuild
+
     # For convenience ...
     TBB_IN_STORE=$out/share/tor-browser
     interp=$(< $NIX_CC/nix-support/dynamic-linker)
@@ -209,7 +229,7 @@ stdenv.mkDerivation rec {
 
     // Insist on using IPC for communicating with Tor
     //
-    // Defaults to creating \$TBB_HOME/TorBrowser/Data/Tor/{socks,control}.socket
+    // Defaults to creating \$XDG_RUNTIME_DIR/Tor/{socks,control}.socket
     lockPref("extensions.torlauncher.control_port_use_ipc", true);
     lockPref("extensions.torlauncher.socks_port_use_ipc", true);
 
@@ -231,7 +251,7 @@ stdenv.mkDerivation rec {
 
     # Hard-code path to TBB fonts; see also FONTCONFIG_FILE in
     # the wrapper below.
-    FONTCONFIG_FILE=$TBB_IN_STORE/TorBrowser/Data/fontconfig/fonts.conf
+    FONTCONFIG_FILE=$TBB_IN_STORE/fontconfig/fonts.conf
     sed -i "$FONTCONFIG_FILE" \
         -e "s,<dir>fonts</dir>,<dir>$TBB_IN_STORE/fonts</dir>,"
 
@@ -251,7 +271,7 @@ stdenv.mkDerivation rec {
     GeoIPv6File $TBB_IN_STORE/TorBrowser/Data/Tor/geoip6
     EOF
 
-    WRAPPER_LD_PRELOAD=${lib.optionalString useHardenedMalloc
+    WRAPPER_LD_PRELOAD=${lib.optionalString (useHardenedMalloc == true)
       "${graphene-hardened-malloc}/lib/libhardened_malloc.so"}
 
     WRAPPER_XDG_DATA_DIRS=${lib.concatMapStringsSep ":" (x: "${x}/share") [
@@ -275,7 +295,7 @@ stdenv.mkDerivation rec {
     export LOCALE_ARCHIVE=${glibcLocales}/lib/locale/locale-archive
 
     # Enter local state directory.
-    REAL_HOME=\$HOME
+    REAL_HOME=\''${HOME%/}
     TBB_HOME=\''${TBB_HOME:-''${XDG_DATA_HOME:-\$REAL_HOME/.local/share}/tor-browser}
     HOME=\$TBB_HOME
 
@@ -331,6 +351,7 @@ stdenv.mkDerivation rec {
       echo "user_pref(\"extensions.torlauncher.toronionauthdir_path\", \"\$HOME/TorBrowser/Data/Tor/onion-auth\");"
       echo "user_pref(\"extensions.torlauncher.torrc_path\", \"\$HOME/TorBrowser/Data/Tor/torrc\");"
       echo "user_pref(\"extensions.torlauncher.tordatadir_path\", \"\$HOME/TorBrowser/Data/Tor\");"
+      echo "user_pref(\"network.proxy.socks\", \"file://\$XDG_RUNTIME_DIR/Tor/socks.socket\");"
     } >> "\$HOME/TorBrowser/Data/Browser/profile.default/prefs.js"
 
     # Lift-off
@@ -375,7 +396,11 @@ stdenv.mkDerivation rec {
       APULSE_PLAYBACK_DEVICE="\''${APULSE_PLAYBACK_DEVICE:-plug:dmix}" \
       \
       TOR_SKIP_LAUNCH="\''${TOR_SKIP_LAUNCH:-}" \
+      TOR_CONTROL_HOST="\''${TOR_CONTROL_HOST:-}" \
       TOR_CONTROL_PORT="\''${TOR_CONTROL_PORT:-}" \
+      TOR_CONTROL_COOKIE_AUTH_FILE="\''${TOR_CONTROL_COOKIE_AUTH_FILE:-}" \
+      TOR_CONTROL_PASSWD="\''${TOR_CONTROL_PASSWD:-}" \
+      TOR_SOCKS_HOST="\''${TOR_SOCKS_HOST:-}" \
       TOR_SOCKS_PORT="\''${TOR_SOCKS_PORT:-}" \
       \
       FONTCONFIG_FILE="$FONTCONFIG_FILE" \
@@ -412,7 +437,26 @@ stdenv.mkDerivation rec {
     echo "Checking tor-browser wrapper ..."
       TBB_HOME=$(mktemp -d) \
       $out/bin/tor-browser --version >/dev/null
+
+    runHook postBuild
   '';
+
+  installPhase = ''
+    runHook preInstall
+
+    # Install distribution customizations
+    install -Dvm644 ${distributionIni} $out/share/tor-browser/distribution/distribution.ini
+    install -Dvm644 ${policiesJson} $out/share/tor-browser/distribution/policies.json
+
+    runHook postInstall
+  '';
+
+  passthru = {
+    inherit sources;
+    updateScript = callPackage ./update.nix {
+      inherit pname version meta;
+    };
+  };
 
   meta = with lib; {
     description = "Tor Browser Bundle built by torproject.org";
@@ -427,8 +471,8 @@ stdenv.mkDerivation rec {
     '';
     homepage = "https://www.torproject.org/";
     changelog = "https://gitweb.torproject.org/builders/tor-browser-build.git/plain/projects/tor-browser/Bundle-Data/Docs/ChangeLog.txt?h=maint-${version}";
-    platforms = attrNames srcs;
-    maintainers = with maintainers; [ offline matejc thoughtpolice joachifm hax404 KarlJoad ];
+    platforms = attrNames sources;
+    maintainers = with maintainers; [ felschr panicgh joachifm hax404 ];
     mainProgram = "tor-browser";
     # MPL2.0+, GPL+, &c.  While it's not entirely clear whether
     # the compound is "libre" in a strict sense (some components place certain
@@ -436,4 +480,4 @@ stdenv.mkDerivation rec {
     license = licenses.free;
     sourceProvenance = with sourceTypes; [ binaryNativeCode ];
   };
-}
+})

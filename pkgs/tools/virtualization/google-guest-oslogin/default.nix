@@ -1,6 +1,5 @@
-{ stdenv
-, lib
-, bashInteractive
+{ lib
+, stdenv
 , curl
 , fetchFromGitHub
 , json_c
@@ -10,13 +9,13 @@
 
 stdenv.mkDerivation rec {
   pname = "google-guest-oslogin";
-  version = "20230217.00";
+  version = "20230808.00";
 
   src = fetchFromGitHub {
     owner = "GoogleCloudPlatform";
     repo = "guest-oslogin";
     rev = version;
-    sha256 = "sha256-MZpm6JgukqdT8B1qZzKT4tO3LBS8ReoVqRGyY5ykWHw=";
+    sha256 = "sha256-6CHMnoPrfXFAgTyIoGPsMos9CaW6W0zcbpIG1j7DRqk=";
   };
 
   postPatch = ''

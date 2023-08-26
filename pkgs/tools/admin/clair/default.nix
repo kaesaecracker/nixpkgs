@@ -8,16 +8,16 @@
 
 buildGoModule rec {
   pname = "clair";
-  version = "4.6.0";
+  version = "4.7.1";
 
   src = fetchFromGitHub {
     owner = "quay";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-Dl1wwK4OSv/nvhT7bH6qOdX4/qL3xFdmz5qiYaEm59Y=";
+    hash = "sha256-+ABZafDc2nmHHnJGXj4iCSheuWoksPwDblmdIusUJuo=";
   };
 
-  vendorHash = "sha256-NqEpJHBZfzUQJ+H8CQBDdb37nlwA+JuXhZzfCAyO0Co=";
+  vendorHash = "sha256-ptgHU/PrLqRG4h3C5x+XUy4+38Yu6h4gTeziaPJ2iWE=";
 
   nativeBuildInputs = [
     makeWrapper

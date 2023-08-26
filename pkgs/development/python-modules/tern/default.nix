@@ -19,14 +19,14 @@
 
 buildPythonPackage rec {
   pname = "tern";
-  version = "2.11.0";
+  version = "2.12.1";
   format = "setuptools";
 
   disabled = pythonOlder "3.7";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-MELPpz7UeOKSAW7hC2xDIog/bdLUflU00vvIbAePNBA=";
+    hash = "sha256-yMIvFiliEHrbZMqvX3ZAROWcqii5VmB54QEYHGRJocA=";
   };
 
   preBuild = ''

@@ -116,6 +116,9 @@ in stdenv.mkDerivation rec {
     #include <string>'
     substituteInPlace src/mongo/db/exec/plan_stats.h --replace '#include <string>' '#include <optional>
     #include <string>'
+  '' + lib.optionalString (versionOlder version "5.0") ''
+    # remove -march overriding, we know better.
+    sed -i 's/env.Append.*-march=.*$/pass/' SConstruct
   '' + lib.optionalString (stdenv.isDarwin && versionOlder version "6.0") ''
     substituteInPlace src/third_party/mozjs-${variants.mozjsVersion}/extract/js/src/jsmath.cpp --replace '${variants.mozjsReplace}' 0
   '' + lib.optionalString (stdenv.isDarwin && versionOlder version "3.6") ''
@@ -145,6 +148,9 @@ in stdenv.mkDerivation rec {
     "VARIANT_DIR=nixos" # Needed so we don't produce argument lists that are too long for gcc / ld
   ] ++ lib.optionals (versionAtLeast version "4.4") [ "--link-model=static" ]
     ++ map (lib: "--use-system-${lib}") system-libraries;
+
+  # This seems to fix mongodb not able to find OpenSSL's crypto.h during build
+  hardeningDisable = [ "fortify3" ];
 
   preBuild = ''
     sconsFlags+=" CC=$CC"

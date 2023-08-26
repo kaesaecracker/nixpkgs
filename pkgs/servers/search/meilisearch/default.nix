@@ -3,12 +3,11 @@
 , rustPlatform
 , fetchFromGitHub
 , Security
-, DiskArbitration
-, Foundation
 , nixosTests
+, nix-update-script
 }:
 
-let version = "1.0.2";
+let version = "1.3.1";
 in
 rustPlatform.buildRustPackage {
   pname = "meilisearch";
@@ -18,15 +17,18 @@ rustPlatform.buildRustPackage {
     owner = "meilisearch";
     repo = "MeiliSearch";
     rev = "refs/tags/v${version}";
-    hash = "sha256-2HfwNoluPPOOAdCaqUVaZcAd8M2naPYAsphZO1Inefg=";
+    hash = "sha256-jttT4qChoqwTnjjoW0Zc15ZieZN7KD1Us64Tk0eDG3Y=";
   };
+
+  cargoBuildFlags = [
+    "--package=meilisearch"
+  ];
 
   cargoLock = {
     lockFile = ./Cargo.lock;
     outputHashes = {
       "actix-web-static-files-3.0.5" = "sha256-2BN0RzLhdykvN3ceRLkaKwSZtel2DBqZ+uz4Qut+nII=";
-      "filter-parser-0.41.3" = "sha256-AhXiOMd9/frioU2K/fAV6Vz+OFyw4MNm4G3kNZSJQac=";
-      "heed-0.12.4" = "sha256-kKwpr5zuTKUkl12J8KgXrlQiK4ee+D5xNq0DF1yWGsQ=";
+      "heed-0.12.7" = "sha256-mthHMaTqmNae8gpe4ZnozABKBrgFQdn9KWCvIzJJ+u4=";
       "lmdb-rkv-sys-0.15.1" = "sha256-zLHTprwF7aa+2jaD7dGYmOZpJYFijMTb4I3ODflNUII=";
       "nelson-0.1.0" = "sha256-eF672quU576wmZSisk7oDR7QiDafuKlSg0BTQkXnzqY=";
     };
@@ -37,12 +39,13 @@ rustPlatform.buildRustPackage {
 
   buildInputs = lib.optionals stdenv.isDarwin [
     Security
-    DiskArbitration
-    Foundation
   ];
 
-  passthru.tests = {
-    meilisearch = nixosTests.meilisearch;
+  passthru = {
+    updateScript = nix-update-script { };
+    tests = {
+      meilisearch = nixosTests.meilisearch;
+    };
   };
 
   # Tests will try to compile with mini-dashboard features which downloads something from the internet.
@@ -54,6 +57,6 @@ rustPlatform.buildRustPackage {
     changelog = "https://github.com/meilisearch/meilisearch/releases/tag/v${version}";
     license = licenses.mit;
     maintainers = with maintainers; [ happysalada ];
-    platforms = [ "aarch64-darwin" "x86_64-linux" "x86_64-darwin" ];
+    platforms = [ "aarch64-linux" "aarch64-darwin" "x86_64-linux" "x86_64-darwin" ];
   };
 }

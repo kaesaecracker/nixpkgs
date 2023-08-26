@@ -4,27 +4,25 @@
 , installShellFiles
 , stdenv
 , darwin
+  # tests
+, ruff-lsp
 }:
 
 rustPlatform.buildRustPackage rec {
   pname = "ruff";
-  version = "0.0.259";
+  version = "0.0.286";
 
   src = fetchFromGitHub {
-    owner = "charliermarsh";
+    owner = "astral-sh";
     repo = pname;
     rev = "v${version}";
-    hash = "sha256-K0EfKG140MDfSg3BVJi9x0q1it5nEeREpkanx2RW1Kw=";
+    hash = "sha256-5bMfOju1uJV4+a4UTzaanpzU6PjCSK9HHMdhvKVaNcg=";
   };
 
-  # We have to use importCargoLock here because `cargo vendor` currently doesn't support workspace
-  # inheritance within Git dependencies, but importCargoLock does.
   cargoLock = {
     lockFile = ./Cargo.lock;
     outputHashes = {
-      "libcst-0.1.0" = "sha256-jG9jYJP4reACkFLrQBWOYH6nbKniNyFVItD0cTZ+nW0=";
-      "pep440_rs-0.2.0" = "sha256-wDJGz7SbHItYsg0+EgIoH48WFdV6MEg+HkeE07JE6AU=";
-      "rustpython-ast-0.2.0" = "sha256-0SHtycgDVOtiz7JZwd1v9lv2exxemcntm9lciih+pgc=";
+      "libcst-0.1.0" = "sha256-FgQE8ofRXQs/zHh7AKscXu0deN3IG+Nk/h+a09Co5R8=";
       "unicode_names2-0.6.0" = "sha256-eWg9+ISm/vztB0KIdjhq5il2ZnwGJQCleCYfznCI3Wg=";
     };
   };
@@ -38,9 +36,18 @@ rustPlatform.buildRustPackage rec {
   ];
 
   cargoBuildFlags = [ "--package=ruff_cli" ];
+  cargoTestFlags = cargoBuildFlags;
 
-  # building tests fails with `undefined symbols`
-  doCheck = false;
+  preBuild = lib.optionalString (stdenv.isDarwin && stdenv.isx86_64) ''
+    # See https://github.com/jemalloc/jemalloc/issues/1997
+    # Using a value of 48 should work on both emulated and native x86_64-darwin.
+    export JEMALLOC_SYS_WITH_LG_VADDR=48
+  '';
+
+  # tests expect no colors
+  preCheck = ''
+    export NO_COLOR=1
+  '';
 
   postInstall = ''
     installShellCompletion --cmd ruff \
@@ -49,11 +56,16 @@ rustPlatform.buildRustPackage rec {
       --zsh <($out/bin/ruff generate-shell-completion zsh)
   '';
 
+  passthru.tests = {
+    inherit ruff-lsp;
+  };
+
   meta = with lib; {
     description = "An extremely fast Python linter";
-    homepage = "https://github.com/charliermarsh/ruff";
-    changelog = "https://github.com/charliermarsh/ruff/releases/tag/v${version}";
+    homepage = "https://github.com/astral-sh/ruff";
+    changelog = "https://github.com/astral-sh/ruff/releases/tag/v${version}";
     license = licenses.mit;
+    mainProgram = "ruff";
     maintainers = with maintainers; [ figsoda ];
   };
 }

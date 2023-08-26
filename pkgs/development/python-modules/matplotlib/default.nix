@@ -3,6 +3,7 @@
 , fetchPypi
 , writeText
 , buildPythonPackage
+, isPyPy
 , pythonOlder
 
 # https://github.com/matplotlib/matplotlib/blob/main/doc/devel/dependencies.rst
@@ -14,9 +15,7 @@
 
 # native libraries
 , ffmpeg-headless
-, fontconfig
 , freetype
-, imagemagick
 , qhull
 
 # propagates
@@ -42,7 +41,8 @@
 , pygobject3
 
 # Tk
-, enableTk ? !stdenv.isDarwin # darwin has its own "MacOSX" backend
+# Darwin has its own "MacOSX" backend, PyPy has tkagg backend and does not support tkinter
+, enableTk ? (!stdenv.isDarwin && !isPyPy)
 , tcl
 , tk
 , tkinter
@@ -76,15 +76,15 @@ let
 in
 
 buildPythonPackage rec {
-  version = "3.7.0";
+  version = "3.7.2";
   pname = "matplotlib";
   format = "pyproject";
 
-  disabled = pythonOlder "3.9";
+  disabled = pythonOlder "3.8";
 
   src = fetchPypi {
     inherit pname version;
-    hash = "sha256-j279MTQw1+9wo4oydigcsuhkazois7IesifaIOFeaBM=";
+    hash = "sha256-qM25Hd2wRDa9LwmLj99LgTUuaM9NLGdW/MQUeRB2Vps=";
   };
 
   env.XDG_RUNTIME_DIR = "/tmp";
@@ -118,7 +118,11 @@ buildPythonPackage rec {
   nativeBuildInputs = [
     pkg-config
     pybind11
+    setuptools
     setuptools-scm
+    numpy
+  ] ++ lib.optionals enableGtk3 [
+    gobject-introspection
   ];
 
   buildInputs = [
@@ -129,13 +133,11 @@ buildPythonPackage rec {
     ghostscript
   ] ++ lib.optionals enableGtk3 [
     cairo
-    gobject-introspection
     gtk3
   ] ++ lib.optionals enableTk [
     libX11
     tcl
     tk
-    tkinter
   ] ++ lib.optionals stdenv.isDarwin [
     Cocoa
   ];
@@ -167,6 +169,8 @@ buildPythonPackage rec {
     tornado
   ] ++ lib.optionals enableNbagg [
     ipykernel
+  ] ++ lib.optionals enableTk [
+    tkinter
   ];
 
   passthru.config = {

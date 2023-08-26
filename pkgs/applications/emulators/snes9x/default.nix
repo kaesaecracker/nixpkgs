@@ -33,14 +33,14 @@ stdenv.mkDerivation rec {
       "snes9x-gtk"
     else
       "snes9x";
-  version = "1.62.1";
+  version = "1.62.3";
 
   src = fetchFromGitHub {
     owner = "snes9xgit";
     repo = "snes9x";
     rev = version;
     fetchSubmodules = true;
-    hash = "sha256-y/tNJmmgigMEqjBWLyqxM/GQ2jcu4YXZjP0AbIjoPLg=";
+    hash = "sha256-+KHpvz7nfwGXjzDAK/V+2JDRT1sa0kXDkg7XcRyvSP8=";
   };
 
   nativeBuildInputs = [
@@ -123,5 +123,6 @@ stdenv.mkDerivation rec {
       maintainers = with maintainers; [ qknight xfix thiagokokada ];
       platforms = platforms.unix;
       broken = (withGtk && stdenv.isDarwin);
+      mainProgram = "snes9x";
     };
 }

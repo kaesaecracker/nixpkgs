@@ -20,6 +20,7 @@
 let
   latex = lib.optionalAttrs buildDocs texlive.combine {
     inherit (texlive) scheme-small
+    changepage
     latexmk
     varwidth
     multirow
@@ -101,7 +102,7 @@ in stdenv.mkDerivation (finalAttrs: {
 
   postInstall = ''
     find $out/bin -executable -type f -exec \
-      patchelf {} --shrink-rpath --allowed-rpath-prefixes /nix/store \;
+      patchelf {} --shrink-rpath --allowed-rpath-prefixes "$NIX_STORE" \;
   '' + lib.optionalString buildTests ''
     mkdir -p $test
     mv $out/bin/rdctst_tests $test/bin

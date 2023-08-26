@@ -2,16 +2,16 @@
 
 buildGoModule rec {
   pname = "netdata-go-plugins";
-  version = "0.51.4";
+  version = "0.54.1";
 
   src = fetchFromGitHub {
     owner = "netdata";
     repo = "go.d.plugin";
     rev = "v${version}";
-    hash = "sha256-yYagbTrUpynvmd20MATQvsR+jZM7dhrQdfSjuayrZJI=";
+    hash = "sha256-3cBgXkvXhSTwQ6qbUbH1nOba5QkjSKtzi2rb+OY06jE=";
   };
 
-  vendorHash = "sha256-lKoFm+wch9/ZgDSNSgYUrOq/X8DUEuSAQ4cc8UGaJzU=";
+  vendorHash = "sha256-DLRcS8wqnwGRLEeMqWj5SfUvE3fz1hty9jItNfmCdRw=";
 
   doCheck = false;
 
@@ -29,6 +29,6 @@ buildGoModule rec {
     homepage = "https://github.com/netdata/go.d.plugin";
     changelog = "https://github.com/netdata/go.d.plugin/releases/tag/v${version}";
     license = licenses.gpl3Only;
-    maintainers = [ ];
+    maintainers = [ maintainers.raitobezarius ];
   };
 }

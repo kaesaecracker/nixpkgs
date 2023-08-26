@@ -23,15 +23,18 @@ assert gpgmeSupport -> sslSupport;
 
 stdenv.mkDerivation rec {
   pname = "mutt";
-  version = "2.2.9";
+  version = "2.2.11";
   outputs = [ "out" "doc" "info" ];
 
   src = fetchurl {
     url = "http://ftp.mutt.org/pub/mutt/${pname}-${version}.tar.gz";
-    sha256 = "+lMbIx1Y/h8wztoO1iZoPqnr37ds5H74uyfC93Qiz/s=";
+    hash = "sha256-EjJc9m1f+KxL2H+sjbUshp3lLdJ4/DAc/VfVofn0Zcw=";
   };
 
-  patches = lib.optional smimeSupport (fetchpatch {
+  patches = [
+    # Avoid build-only references embedding into 'mutt -v' output.
+    ./no-build-only-refs.patch
+  ] ++ lib.optional smimeSupport (fetchpatch {
     url = "https://salsa.debian.org/mutt-team/mutt/raw/debian/1.10.1-2/debian/patches/misc/smime.rc.patch";
     sha256 = "0b4i00chvx6zj9pcb06x2jysmrcb2znn831lcy32cgfds6gr3nsi";
   });

@@ -4,18 +4,18 @@
 
 rustPlatform.buildRustPackage rec {
   pname = "crosvm";
-  version = "111.1";
+  version = "116.1";
 
   src = fetchgit {
     url = "https://chromium.googlesource.com/chromiumos/platform/crosvm";
-    rev = "9ad89972330f70fca5a29967f226cf905977bf7f";
-    sha256 = "hvP3V7kzfPXOIe+6GBWupfhW5SM3ifoqmx7dyTgSTeU=";
+    rev = "97ac6ce38d8e5789c91fcc5bae6078d21a2afdb3";
+    sha256 = "NssjHXorPGZBYqERPeLW3cqEzbXqyL9N4OnLLQMLALk=";
     fetchSubmodules = true;
   };
 
   separateDebugInfo = true;
 
-  cargoSha256 = "S8zeOB+S5ZTuHqWNjxDIa4ev24ose/fByYwPrhR9OY8=";
+  cargoHash = "sha256-mlXAlq62nAW6ZVxRav+k/iU1YDecfPDTCPp7FdJBO54=";
 
   nativeBuildInputs = [
     pkg-config protobuf python3 rustPlatform.bindgenHook wayland-scanner
@@ -29,11 +29,7 @@ rustPlatform.buildRustPackage rec {
     patchShebangs third_party/minijail/tools/*.py
   '';
 
-  # crosvm mistakenly expects the stable protocols to be in the root
-  # of the pkgdatadir path, rather than under the "stable"
-  # subdirectory.
-  PKG_CONFIG_WAYLAND_PROTOCOLS_PKGDATADIR =
-    "${wayland-protocols}/share/wayland-protocols/stable";
+  CROSVM_USE_SYSTEM_VIRGLRENDERER = true;
 
   buildFeatures = [ "default" "virgl_renderer" "virgl_renderer_next" ];
 

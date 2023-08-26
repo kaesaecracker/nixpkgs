@@ -77,6 +77,7 @@ buildPythonPackage rec {
   ];
 
   meta = with lib; {
+    mainProgram = "pyproject-build";
     description = "Simple, correct PEP517 package builder";
     longDescription = ''
       build will invoke the PEP 517 hooks to build a distribution package. It
@@ -85,6 +86,6 @@ buildPythonPackage rec {
     homepage = "https://github.com/pypa/build";
     changelog = "https://github.com/pypa/build/blob/${version}/CHANGELOG.rst";
     license = licenses.mit;
-    maintainers = with maintainers; [ fab ];
+    maintainers = teams.python.members ++ [ maintainers.fab ];
   };
 }

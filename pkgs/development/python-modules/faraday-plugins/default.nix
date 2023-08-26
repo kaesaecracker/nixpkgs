@@ -6,6 +6,7 @@
 , fetchFromGitHub
 , html2text
 , lxml
+, markdown
 , pytestCheckHook
 , python-dateutil
 , pythonOlder
@@ -17,7 +18,7 @@
 
 buildPythonPackage rec {
   pname = "faraday-plugins";
-  version = "1.10.0";
+  version = "1.13.0";
   format = "setuptools";
 
   disabled = pythonOlder "3.7";
@@ -26,7 +27,7 @@ buildPythonPackage rec {
     owner = "infobyte";
     repo = "faraday_plugins";
     rev = "refs/tags/${version}";
-    hash = "sha256-bVuysEr8VVFgA4OZ7N7UlL2FigbyLVyPr1HHwkshSMU=";
+    hash = "sha256-t1C9fS0LU46J7y+rp2pTCVma09aFqzuBtslrlU+MS1E=";
   };
 
   postPatch = ''
@@ -40,6 +41,7 @@ buildPythonPackage rec {
     colorama
     html2text
     lxml
+    markdown
     python-dateutil
     pytz
     requests

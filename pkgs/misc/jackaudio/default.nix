@@ -1,5 +1,5 @@
 { lib, stdenv, fetchFromGitHub, pkg-config, python3Packages, makeWrapper
-, bash, libsamplerate, libsndfile, readline, eigen, celt
+, libsamplerate, libsndfile, readline, eigen, celt
 , wafHook
 # Darwin Dependencies
 , aften, AudioUnit, CoreAudio, libobjc, Accelerate
@@ -37,6 +37,8 @@ stdenv.mkDerivation (finalAttrs: {
     sha256 = "01s8i64qczxqawgrzrw19asaqmcspf5l2h3203xzg56wnnhhzcw7";
   };
 
+  outputs = [ "out" "dev" ];
+
   nativeBuildInputs = [ pkg-config python makeWrapper wafHook ];
   buildInputs = [ libsamplerate libsndfile readline eigen celt
     optDbus optPythonDBus optLibffado optAlsaLib optLibopus
@@ -44,9 +46,8 @@ stdenv.mkDerivation (finalAttrs: {
     aften AudioUnit CoreAudio Accelerate libobjc
   ];
 
-  prePatch = ''
-    substituteInPlace svnversion_regenerate.sh \
-        --replace /bin/bash ${bash}/bin/bash
+  postPatch = ''
+    patchShebangs --build svnversion_regenerate.sh
   '';
 
   dontAddWafCrossFlags = true;
@@ -63,6 +64,11 @@ stdenv.mkDerivation (finalAttrs: {
   '' else ''
     wrapProgram $out/bin/jack_control --set PYTHONPATH $PYTHONPATH
   '');
+
+  postFixup = ''
+    substituteInPlace "$dev/lib/pkgconfig/jack.pc" \
+      --replace "$out/include" "$dev/include"
+  '';
 
   passthru.tests.pkg-config = testers.testMetaPkgConfig finalAttrs.finalPackage;
 

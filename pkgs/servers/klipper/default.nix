@@ -3,25 +3,29 @@
 , fetchFromGitHub
 , python3
 , unstableGitUpdater
+, makeWrapper
 }:
 
 stdenv.mkDerivation rec {
   pname = "klipper";
-  version = "unstable-2023-03-15";
+  version = "unstable-2023-08-21";
 
   src = fetchFromGitHub {
     owner = "KevinOConnor";
     repo = "klipper";
-    rev = "c54d83c9f134d47f00da5ecd0d762e01748aaa59";
-    sha256 = "sha256-zPK1dzUFLQmno4A7jEStininVcYpUh0WAFjlAqnTLS0=";
+    rev = "5f990f93d533247d3a675e8c423280f4333ad8ce";
+    sha256 = "sha256-jICOEzLvy2wBInW4qIbFZbhRuHjsio6UM13K9UlZi1U=";
   };
 
-  sourceRoot = "source/klippy";
+  sourceRoot = "${src.name}/klippy";
 
   # NB: This is needed for the postBuild step
-  nativeBuildInputs = [ (python3.withPackages ( p: with p; [ cffi ] )) ];
+  nativeBuildInputs = [
+    (python3.withPackages ( p: with p; [ cffi ] ))
+    makeWrapper
+  ];
 
-  buildInputs = [ (python3.withPackages (p: with p; [ cffi pyserial greenlet jinja2 markupsafe numpy ])) ];
+  buildInputs = [ (python3.withPackages (p: with p; [ can cffi pyserial greenlet jinja2 markupsafe numpy ])) ];
 
   # we need to run this to prebuild the chelper.
   postBuild = ''
@@ -49,7 +53,9 @@ stdenv.mkDerivation rec {
     cp -r $src/docs $out/lib/docs
     cp -r $src/config $out/lib/config
 
+    mkdir -p $out/bin
     chmod 755 $out/lib/klipper/klippy.py
+    makeWrapper $out/lib/klipper/klippy.py $out/bin/klippy --chdir $out/lib/klipper
     runHook postInstall
   '';
 

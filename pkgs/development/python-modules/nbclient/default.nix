@@ -1,4 +1,4 @@
-{ async_generator
+{ async-generator
 , buildPythonPackage
 , fetchFromGitHub
 , hatchling
@@ -36,7 +36,7 @@ let nbclient = buildPythonPackage rec {
   ];
 
   propagatedBuildInputs = [
-    async_generator
+    async-generator
     traitlets
     nbformat
     nest-asyncio
@@ -68,7 +68,7 @@ let nbclient = buildPythonPackage rec {
     homepage = "https://github.com/jupyter/nbclient";
     description = "A client library for executing notebooks";
     license = licenses.bsd3;
-    maintainers = [ maintainers.erictapen ];
+    maintainers = [ ];
   };
 };
 in nbclient

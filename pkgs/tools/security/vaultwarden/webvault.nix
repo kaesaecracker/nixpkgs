@@ -3,37 +3,34 @@
 , fetchFromGitHub
 , git
 , nixosTests
-, nodejs-16_x
 , python3
 }:
 
 let
-  buildNpmPackage' = buildNpmPackage.override { nodejs = nodejs-16_x; };
-
-  version = "2022.12.0";
+  version = "2023.5.0";
 
   bw_web_builds = fetchFromGitHub {
     owner = "dani-garcia";
     repo = "bw_web_builds";
     rev = "v${version}";
-    hash = "sha256-4yUE0ySUCKmmbca+T8qjqSO0AHZEUAHZ4nheRjpDnZo=";
+    hash = "sha256-dH+d206nDaUrX2FcpPTegAtlQvquxk+tfQt3vJQlOjw=";
   };
-in buildNpmPackage' {
+in buildNpmPackage rec {
   pname = "vaultwarden-webvault";
   inherit version;
 
   src = fetchFromGitHub {
     owner = "bitwarden";
     repo = "clients";
-    rev = "web-v${version}";
-    hash = "sha256-CsbnnP12P7JuGDOm5Ia73SzET/jCx3qRbz9vdUf7lCA=";
+    rev = "web-v${lib.removeSuffix "b" version}";
+    hash = "sha256-ELKpGSY4ZbgSk4vJnTiB+IOa8RQU8Ahy3A1mYsKtthU=";
   };
 
-  npmDepsHash = "sha256-wWOtVGNOzY2s82nfQDuWgA4ukpJxJr8Z7Y+rFPq2QdU=";
+  npmDepsHash = "sha256-G8DEYPjEP3L4s0pr5n2ZTj8kkT0E7Po1BKhZ2hUdJuY=";
 
   postPatch = ''
     ln -s ${bw_web_builds}/{patches,resources} ..
-    PATH="${git}/bin:$PATH" VAULT_VERSION=${bw_web_builds.rev} \
+    PATH="${git}/bin:$PATH" VAULT_VERSION="${lib.removePrefix "web-" src.rev}" \
       bash ${bw_web_builds}/scripts/apply_patches.sh
   '';
 

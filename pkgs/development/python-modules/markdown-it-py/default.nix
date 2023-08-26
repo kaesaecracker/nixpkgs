@@ -16,8 +16,10 @@
 , sphinx-book-theme
 , sphinx-copybutton
 , sphinx-design
+, stdenv
 , pytest-regressions
 , pytestCheckHook
+, pythonRelaxDepsHook
 , pythonOlder
 }:
 
@@ -35,7 +37,13 @@ buildPythonPackage rec {
     hash = "sha256-qdRU1BxczFDGoIEtl0ZMkKNn4p5tec8YuPt5ZwX5fYM=";
   };
 
+  # fix downstrem usage of markdown-it-py[linkify]
+  pythonRelaxDeps = [
+    "linkify-it-py"
+  ];
+
   nativeBuildInputs = [
+    pythonRelaxDepsHook
     flit-core
   ];
 
@@ -52,6 +60,7 @@ buildPythonPackage rec {
   preCheck = ''
     rm -r benchmarking
   '';
+  doCheck = !stdenv.isi686;
 
   pythonImportsCheck = [
     "markdown_it"

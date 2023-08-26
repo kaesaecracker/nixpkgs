@@ -2,20 +2,24 @@
 
 buildGoModule rec {
   pname = "docker-slim";
-  version = "1.40.0";
+  version = "1.40.3";
 
   src = fetchFromGitHub {
     owner = "slimtoolkit";
     repo = "slim";
     rev = version;
-    sha256 = "sha256-KbwkZIGkAdzPPo5CrWKnKzFsD8OUONk6JWo1wzwti3s=";
+    hash = "sha256-fXB2rMW73F12ZO1sqUIiaky6LDiMasg3QcIgeWwtkOs=";
   };
 
-  vendorSha256 = null;
+  vendorHash = null;
 
   subPackages = [ "cmd/slim" "cmd/slim-sensor" ];
 
   nativeBuildInputs = [ makeBinaryWrapper ];
+
+  preBuild = ''
+    go generate github.com/docker-slim/docker-slim/pkg/appbom
+  '';
 
   ldflags = [
     "-s"

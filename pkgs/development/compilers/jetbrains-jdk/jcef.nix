@@ -75,9 +75,12 @@ let rpath = lib.makeLibraryPath [
 buildType = if debugBuild then "Debug" else "Release";
 
 in stdenv.mkDerivation rec {
-  name = "jcef-jetbrains";
-  rev = "153d40c761a25a745d7ebf0ee3a024bbc2c840b5";
-  commit-num = "611";  # Run `git rev-list --count HEAD`
+  pname = "jcef-jetbrains";
+  rev = "1ac1c682c497f2b864f86050796461f22935ea64";
+  # This is the commit number
+  # Currently from the branch: https://github.com/JetBrains/jcef/tree/232
+  # Run `git rev-list --count HEAD`
+  version = "672";
 
   nativeBuildInputs = [ cmake python3 jdk17 git rsync ant ninja ];
   buildInputs = [ libX11 libXdamage nss nspr ];
@@ -86,19 +89,19 @@ in stdenv.mkDerivation rec {
     owner = "jetbrains";
     repo = "jcef";
     inherit rev;
-    hash = "sha256-Vud4nIT2c7uOK7GKKw3plf41WzKqhg+2xpIwB/LyqnE=";
+    hash = "sha256-3HuW8upR/bZoK8euVti2KpCZh9xxfqgyHmgoG1NjxOI=";
   };
   cef-bin = let
-    fileName = "cef_binary_104.4.26+g4180781+chromium-104.0.5112.102_linux64_minimal";
+    fileName = "cef_binary_111.2.1+g870da30+chromium-111.0.5563.64_linux64_minimal";
     urlName = builtins.replaceStrings ["+"] ["%2B"] fileName;
   in fetchzip rec {
     name = fileName;
     url = "https://cef-builds.spotifycdn.com/${urlName}.tar.bz2";
-    hash = "sha256-0PAWWBR+9TO8hhejydWz8R6Df3d9A/Mb0VL8stlPz5Q=";
+    hash = "sha256-r+zXTmDN5s/bYLvbCnHufYdXIqQmCDlbWgs5pdOpLTw=";
   };
   clang-fmt = fetchurl {
-    url = "https://storage.googleapis.com/chromium-clang-format/942fc8b1789144b8071d3fc03ff0fcbe1cf81ac8";
-    hash = "sha256-5iAU49tQmLS7zkS+6iGT+6SEdERRo1RkyRpiRvc9nVY=";
+    url = "https://storage.googleapis.com/chromium-clang-format/dd736afb28430c9782750fc0fd5f0ed497399263";
+    hash = "sha256-4H6FVO9jdZtxH40CSfS+4VESAHgYgYxfCBFSMHdT0hE=";
   };
 
   configurePhase = ''
@@ -116,7 +119,7 @@ in stdenv.mkDerivation rec {
       -e 's|os.path.isdir(os.path.join(path, \x27.git\x27))|True|' \
       -e 's|"%s rev-parse %s" % (git_exe, branch)|"echo '${rev}'"|' \
       -e 's|"%s config --get remote.origin.url" % git_exe|"echo 'https://github.com/jetbrains/jcef'"|' \
-      -e 's|"%s rev-list --count %s" % (git_exe, branch)|"echo '${commit-num}'"|' \
+      -e 's|"%s rev-list --count %s" % (git_exe, branch)|"echo '${version}'"|' \
       -i tools/git_util.py
 
     cp ${clang-fmt} tools/buildtools/linux64/clang-format

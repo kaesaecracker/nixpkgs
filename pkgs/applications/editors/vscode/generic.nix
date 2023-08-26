@@ -1,7 +1,8 @@
 { stdenv, lib, makeDesktopItem
 , unzip, libsecret, libXScrnSaver, libxshmfence, buildPackages
 , atomEnv, at-spi2-atk, autoPatchelfHook
-, systemd, fontconfig, libdbusmenu, glib, buildFHSUserEnvBubblewrap, wayland
+, systemd, fontconfig, libdbusmenu, glib, buildFHSEnv, wayland
+, libglvnd, libkrb5
 
 # Populate passthru.tests
 , tests
@@ -13,13 +14,13 @@
 , version, src, meta, sourceRoot, commandLineArgs
 , executableName, longName, shortName, pname, updateScript
 , dontFixup ? false
-# sourceExecutableName is the name of the binary in the source archive, over
-# which we have no control
+, rev ? null, vscodeServer ? null
 , sourceExecutableName ? executableName
+, useVSCodeRipgrep ? false
+, ripgrep
 }:
 
 let
-  inherit (stdenv.hostPlatform) system;
   unwrapped = stdenv.mkDerivation {
 
     inherit pname version src sourceRoot dontFixup;
@@ -28,6 +29,8 @@ let
       inherit executableName longName tests updateScript;
       fhs = fhs {};
       fhsWithPackages = f: fhs { additionalPkgs = f; };
+    } // lib.optionalAttrs (vscodeServer != null) {
+      inherit rev vscodeServer;
     };
 
     desktopItem = makeDesktopItem {
@@ -36,7 +39,7 @@ let
       comment = "Code Editing. Redefined.";
       genericName = "Text Editor";
       exec = "${executableName} %F";
-      icon = "code";
+      icon = "vs${executableName}";
       startupNotify = true;
       startupWMClass = shortName;
       categories = [ "Utility" "TextEditor" "Development" "IDE" ];
@@ -45,7 +48,7 @@ let
       actions.new-empty-window = {
         name = "New Empty Window";
         exec = "${executableName} --new-window %F";
-        icon = "code";
+        icon = "vs${executableName}";
       };
     };
 
@@ -55,7 +58,7 @@ let
       comment = "Code Editing. Redefined.";
       genericName = "Text Editor";
       exec = executableName + " --open-url %U";
-      icon = "code";
+      icon = "vs${executableName}";
       startupNotify = true;
       categories = [ "Utility" "TextEditor" "Development" "IDE" ];
       mimeTypes = [ "x-scheme-handler/vscode" ];
@@ -64,9 +67,9 @@ let
     };
 
     buildInputs = [ libsecret libXScrnSaver libxshmfence ]
-      ++ lib.optionals (!stdenv.isDarwin) ([ at-spi2-atk ] ++ atomEnv.packages);
+      ++ lib.optionals (!stdenv.isDarwin) ([ at-spi2-atk libkrb5 ] ++ atomEnv.packages);
 
-    runtimeDependencies = lib.optionals stdenv.isLinux [ (lib.getLib systemd) fontconfig.lib libdbusmenu wayland ];
+    runtimeDependencies = lib.optionals stdenv.isLinux [ (lib.getLib systemd) fontconfig.lib libdbusmenu wayland libsecret ];
 
     nativeBuildInputs = [ unzip ]
       ++ lib.optionals stdenv.isLinux [
@@ -96,12 +99,18 @@ let
       ln -s "$desktopItem/share/applications/${executableName}.desktop" "$out/share/applications/${executableName}.desktop"
       ln -s "$urlHandlerDesktopItem/share/applications/${executableName}-url-handler.desktop" "$out/share/applications/${executableName}-url-handler.desktop"
 
+      # These are named vscode.png, vscode-insiders.png, etc to match the name in upstream *.deb packages.
       mkdir -p "$out/share/pixmaps"
-      cp "$out/lib/vscode/resources/app/resources/linux/code.png" "$out/share/pixmaps/code.png"
+      cp "$out/lib/vscode/resources/app/resources/linux/code.png" "$out/share/pixmaps/vs${executableName}.png"
 
       # Override the previously determined VSCODE_PATH with the one we know to be correct
       sed -i "/ELECTRON=/iVSCODE_PATH='$out/lib/vscode'" "$out/bin/${executableName}"
       grep -q "VSCODE_PATH='$out/lib/vscode'" "$out/bin/${executableName}" # check if sed succeeded
+
+      # Remove native encryption code, as it derives the key from the executable path which does not work for us.
+      # The credentials should be stored in a secure keychain already, so the benefit of this is questionable
+      # in the first place.
+      rm -rf $out/lib/vscode/resources/app/node_modules/vscode-encrypt
     '') + ''
       runHook postInstall
     '';
@@ -132,12 +141,20 @@ let
       # and the window immediately closes which renders VSCode unusable
       # see https://github.com/NixOS/nixpkgs/issues/152939 for full log
       ln -rs "$unpacked" "$packed"
+    '' + (let
+      vscodeRipgrep = if stdenv.isDarwin then
+        "Contents/Resources/app/node_modules.asar.unpacked/@vscode/ripgrep/bin/rg"
+      else
+        "resources/app/node_modules/@vscode/ripgrep/bin/rg";
+    in if !useVSCodeRipgrep then ''
+      rm ${vscodeRipgrep}
+      ln -s ${ripgrep}/bin/rg ${vscodeRipgrep}
+    '' else ''
+      chmod +x ${vscodeRipgrep}
+    '');
 
-      # this fixes bundled ripgrep
-      chmod +x resources/app/node_modules/@vscode/ripgrep/bin/rg
-
-      # see https://github.com/gentoo/gentoo/commit/4da5959
-      chmod +x resources/app/node_modules/node-pty/build/Release/spawn-helper
+    postFixup = lib.optionalString stdenv.isLinux ''
+      patchelf --add-needed ${libglvnd}/lib/libGLESv2.so.2 $out/lib/vscode/${executableName}
     '';
 
     inherit meta;
@@ -150,9 +167,9 @@ let
   # in order to create or update extensions.
   # See: #83288 #91179 #73810 #41189
   #
-  # buildFHSUserEnv allows for users to use the existing vscode
+  # buildFHSEnv allows for users to use the existing vscode
   # extension tooling without significant pain.
-  fhs = { additionalPkgs ? pkgs: [] }: buildFHSUserEnvBubblewrap {
+  fhs = { additionalPkgs ? pkgs: [] }: buildFHSEnv {
     # also determines the name of the wrapped command
     name = executableName;
 
@@ -196,7 +213,7 @@ let
 
     meta = meta // {
       description = ''
-        Wrapped variant of ${pname} which launches in a FHS compatible envrionment.
+        Wrapped variant of ${pname} which launches in a FHS compatible environment.
         Should allow for easy usage of extensions without nix-specific modifications.
       '';
     };

@@ -1,25 +1,12 @@
 { lib
 , python3
+, fetchPypi
 , fetchFromGitHub
 }:
 
-let
-  python = python3.override {
-    packageOverrides = self: super: {
-      sqlalchemy = super.sqlalchemy.overridePythonAttrs (old: rec {
-        version = "1.4.47";
-        src = self.fetchPypi {
-          pname = "SQLAlchemy";
-          inherit version;
-          hash = "sha256-lfwC9/wfMZmqpHqKdXQ3E0z2GOnZlMhO/9U/Uww4WG8=";
-        };
-      });
-    };
-  };
-in
-python.pkgs.buildPythonApplication rec {
+python3.pkgs.buildPythonApplication rec {
   pname = "flexget";
-  version = "3.5.33";
+  version = "3.9.4";
   format = "pyproject";
 
   # Fetch from GitHub in order to use `requirements.in`
@@ -27,22 +14,20 @@ python.pkgs.buildPythonApplication rec {
     owner = "Flexget";
     repo = "Flexget";
     rev = "refs/tags/v${version}";
-    hash = "sha256-LzDXNl2IQ3+j9uP+nE6JS8E+pO0n9zwmA7wrMeKR6Ms=";
+    hash = "sha256-cdmW0VSWjr3rm/1T0uDy1iPm3ojR5wrgRixyjIQhodU=";
   };
 
   postPatch = ''
     # remove dependency constraints but keep environment constraints
     sed 's/[~<>=][^;]*//' -i requirements.txt
-
-    # "zxcvbn-python" was renamed to "zxcvbn", and we don't have the former in
-    # nixpkgs. See: https://github.com/NixOS/nixpkgs/issues/62110
-    substituteInPlace requirements.txt --replace "zxcvbn-python" "zxcvbn"
   '';
 
-  # ~400 failures
-  doCheck = false;
+  nativeBuildInputs = with python3.pkgs; [
+    setuptools
+    wheel
+  ];
 
-  propagatedBuildInputs = with python.pkgs; [
+  propagatedBuildInputs = with python3.pkgs; [
     # See https://github.com/Flexget/Flexget/blob/master/requirements.txt
     apscheduler
     beautifulsoup4
@@ -59,6 +44,7 @@ python.pkgs.buildPythonApplication rec {
     packaging
     psutil
     pynzb
+    pyrsistent
     pyrss2gen
     python-dateutil
     pyyaml
@@ -87,7 +73,11 @@ python.pkgs.buildPythonApplication rec {
 
   pythonImportsCheck = [
     "flexget"
+    "flexget.plugins.clients.transmission"
   ];
+
+  # ~400 failures
+  doCheck = false;
 
   meta = with lib; {
     homepage = "https://flexget.com/";
