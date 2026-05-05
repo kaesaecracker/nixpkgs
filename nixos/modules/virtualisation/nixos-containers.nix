@@ -136,6 +136,7 @@ let
       extraFlags+=("--private-users=$PRIVATE_USERS")
       if [[
         "$PRIVATE_USERS" = "pick"
+        || "$PRIVATE_USERS" = "managed"
         || ("$PRIVATE_USERS" =~ ^[[:digit:]]+$ && "$PRIVATE_USERS" -gt 0)
       ]]; then
         # when user namespacing is enabled, we use `idmap` mount option so that
@@ -745,6 +746,7 @@ in
                     "no"
                     "identity"
                     "pick"
+                    "managed"
                   ]
                 );
                 default = "no";
@@ -760,7 +762,13 @@ in
 
                   If set to `pick`, user namespacing is enabled and the UID/GID range is automatically chosen,
                   so that no overlapping UID/GID ranges are assigned to multiple containers.
-                  This is the recommanded option as it enhances container security massively and operates fully automatically in most cases.
+                  This is the recommended option as it enhances container security massively and operates fully automatically in most cases.
+
+                  If set to `managed`, the UID/GID range is allocated by `systemd-nsresourced`, which
+                  also sets up the user namespace itself before invoking `systemd-nspawn`. This allows
+                  `systemd-nspawn` to run without elevated privileges on the host. Requires
+                  {option}`containers.<name>.privateNetwork` to be enabled and
+                  {option}`systemd.nsresourced.enable` to be true.
 
                   See <https://www.freedesktop.org/software/systemd/man/latest/systemd-nspawn.html#--private-users=> for details.
                 '';
@@ -970,8 +978,16 @@ in
         let
           mapper =
             name: cfg:
-            optional (cfg.networkNamespace != null && (cfg.privateNetwork || cfg.interfaces != [ ]))
-              "containers.${name}.networkNamespace is mutally exclusive to containers.${name}.privateNetwork and containers.${name}.interfaces.";
+            [
+              {
+                assertion = !(cfg.networkNamespace != null && (cfg.privateNetwork || cfg.interfaces != [ ]));
+                message = "containers.${name}.networkNamespace is mutually exclusive to containers.${name}.privateNetwork and containers.${name}.interfaces.";
+              }
+              {
+                assertion = cfg.privateUsers != "managed" || cfg.privateNetwork;
+                message = "containers.${name}.privateNetwork must be enabled when containers.${name}.privateUsers = \"managed\"";
+              }
+            ];
         in
         mkMerge (mapAttrsToList mapper config.containers);
     }
