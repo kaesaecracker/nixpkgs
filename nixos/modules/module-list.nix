@@ -1939,6 +1939,7 @@
   ./system/boot/systemd/journald-upload.nix
   ./system/boot/systemd/journald.nix
   ./system/boot/systemd/logind.nix
+  ./system/boot/systemd/nsresourced.nix
   ./system/boot/systemd/nspawn.nix
   ./system/boot/systemd/oomd.nix
   ./system/boot/systemd/repart.nix
