@@ -990,6 +990,10 @@ in
             ];
         in
         mkMerge (mapAttrsToList mapper config.containers);
+
+      systemd.nsresourced.enable = mkIf
+        (lib.any (cfg: cfg.privateUsers == "managed") (lib.attrValues config.containers))
+        true;
     }
 
     (mkIf (config.boot.enableContainers) (
